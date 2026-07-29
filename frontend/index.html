@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FixAI – AI Electronics Damage Detection & Repair Assistant</title>
+  <meta name="description" content="AI-powered electronics component scanning, damage detection, repair guidance, replacement parts marketplace, and service center finder.">
+  
+  <!-- FontAwesome Icons & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <!-- Sticky Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-microchip"></i>
+      </div>
+      <div>Fix<span>AI</span></div>
+    </div>
+    
+    <ul class="nav-links">
+      <li class="nav-link active" onclick="navigateTo('home')"><i class="fa-solid fa-house"></i> Home</li>
+      <li class="nav-link" onclick="navigateTo('scanner')"><i class="fa-solid fa-expand"></i> AI Scanner</li>
+      <li class="nav-link" onclick="navigateTo('assistant')"><i class="fa-solid fa-robot"></i> AI Assistant</li>
+      <li class="nav-link" onclick="navigateTo('repair-guide')"><i class="fa-solid fa-wrench"></i> Repair Guide</li>
+      <li class="nav-link" onclick="navigateTo('marketplace')"><i class="fa-solid fa-store"></i> Marketplace</li>
+      <li class="nav-link" onclick="navigateTo('service-centers')"><i class="fa-solid fa-location-dot"></i> Service Centers</li>
+      <li class="nav-link" onclick="navigateTo('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
+      <li class="nav-link" onclick="navigateTo('about')"><i class="fa-solid fa-circle-info"></i> About</li>
+    </ul>
+
+    <div class="nav-auth" id="navAuthSection">
+      <button class="btn btn-outline btn-sm" onclick="openModal('loginModal')">Login</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('registerModal')">Register</button>
+    </div>
+  </nav>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- MAIN VIEW CONTAINERS -->
+
+  <!-- 1. HOME VIEW -->
+  <section id="view-home" class="page-view active">
+    <div class="hero">
+      <div class="hero-content">
+        <h1>AI Electronics Repair Assistant</h1>
+        <p>Scan electronic components using Computer Vision, detect damaged hardware, receive step-by-step repair guidance, find replacement parts, and connect with nearby certified service centers.</p>
+        <div class="hero-actions">
+          <button class="btn btn-accent" onclick="navigateTo('scanner')">
+            <i class="fa-solid fa-camera"></i> Scan Now
+          </button>
+          <button class="btn btn-outline" onclick="navigateTo('assistant')">
+            <i class="fa-solid fa-comments"></i> Ask AI Assistant
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-circuit-card glass-card">
+          <canvas id="heroCanvas" class="hero-circuit-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Section -->
+    <div style="margin-top: 4rem;">
+      <h2 class="section-title">Intelligent Repair Platform</h2>
+      <p class="section-subtitle">Everything you need to diagnose, source, and repair electronics in one unified workflow.</p>
+
+      <div class="features-grid">
+        <div class="feature-card glass-card" onclick="navigateTo('scanner')">
+          <div class="feature-icon"><i class="fa-solid fa-microchip"></i></div>
+          <h3>AI Component Detection</h3>
+          <p>Detect ICs, capacitors, resistors, MOSFETs, diodes, fuses, and connectors automatically from photos.</p>
+        </div>
+
+        <div class="feature-card glass-card" onclick="navigateTo('scanner')">
+          <div class="feature-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <h3>Damage Analysis</h3>
+          <p>Identify charred ICs, bulging capacitors, blown fuses, and calculate estimated repair cost & time.</p>
+        </div>
+
+        <div class="feature-card glass-card" onclick="navigateTo('assistant')">
+          <div class="feature-icon"><i class="fa-solid fa-headset"></i></div>
+          <h3>AI Technical Assistant</h3>
+          <p>Ask complex hardware questions, verify pinouts, and receive interactive repair advice via text or voice.</p>
+        </div>
+
+        <div class="feature-card glass-card" onclick="navigateTo('repair-guide')">
+          <div class="feature-icon"><i class="fa-solid fa-book-open-reader"></i></div>
+          <h3>Step-by-Step Guides</h3>
+          <p>Detailed desoldering and replacement procedures equipped with safety tips and tool checklists.</p>
+        </div>
+
+        <div class="feature-card glass-card" onclick="navigateTo('marketplace')">
+          <div class="feature-icon"><i class="fa-solid fa-basket-shopping"></i></div>
+          <h3>Parts Marketplace</h3>
+          <p>Order compatible replacement components directly with verified stock and fast local shipping.</p>
+        </div>
+
+        <div class="feature-card glass-card" onclick="navigateTo('service-centers')">
+          <div class="feature-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+          <h3>Service Centers</h3>
+          <p>Locate nearby authorized electronics repair shops and schedule chip-level repair appointments.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. AI SCANNER VIEW -->
+  <section id="view-scanner" class="page-view">
+    <div class="scanner-container">
+      <h2 class="section-title">AI Electronics Scanner</h2>
+      <p class="section-subtitle">Upload or capture an image of your PCB board to identify damaged components automatically.</p>
+
+      <div class="dropzone glass-card" id="dropzone" onclick="triggerFileInput()">
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+        <div class="dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <h3>Drag & Drop your PCB image here</h3>
+        <p style="color: var(--color-text-muted); margin-top: 0.5rem;">or click to browse from device (JPG, PNG, WEBP)</p>
+      </div>
+
+      <div class="scanner-actions">
+        <button class="btn btn-secondary" onclick="triggerFileInput()">
+          <i class="fa-solid fa-folder-open"></i> Upload Image
+        </button>
+        <button class="btn btn-secondary" onclick="openCameraModal()">
+          <i class="fa-solid fa-camera"></i> Open Camera
+        </button>
+        <button class="btn btn-accent" id="startScanBtn" onclick="executeScanProcess()">
+          <i class="fa-solid fa-play"></i> Start AI Scan
+        </button>
+      </div>
+
+      <!-- Preview & Scanning Animation Area -->
+      <div id="scanPreviewArea" style="display: none; margin-top: 2rem;">
+        <div class="scan-display-area">
+          <img id="previewImage" class="scan-image" src="" alt="PCB Scan">
+          <div id="laserBeam" class="scan-laser-beam"></div>
+          <div id="boundingOverlay" style="position: absolute; top:0; left:0; width:100%; height:100%;"></div>
+        </div>
+        <div id="scanProgressMsg" style="text-align: center; margin-top: 1rem; color: var(--color-accent); font-weight: 600;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. SCAN RESULT VIEW -->
+  <section id="view-scan-result" class="page-view">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <div>
+        <h2 class="section-title" id="resultDeviceName">Smart TV Main Motherboard Rev 4.1</h2>
+        <p class="section-subtitle">AI Analysis Report ID #SR-94821</p>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <button class="btn btn-outline btn-sm" onclick="navigateTo('assistant')"><i class="fa-solid fa-robot"></i> Ask AI</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadPDFReport()"><i class="fa-solid fa-file-pdf"></i> Download Report</button>
+        <button class="btn btn-primary btn-sm" onclick="saveToHistory()"><i class="fa-solid fa-bookmark"></i> Save History</button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <!-- Bounding Box Image View -->
+      <div class="glass-card" style="padding: 1.25rem;">
+        <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-crosshairs"></i> Computer Vision Inspection</h3>
+        <div class="scan-display-area" style="position: relative;" id="resultImageContainer">
+          <img id="resultImage" class="scan-image" src="/assets/scans/pcb_sample1.jpg" alt="Scan Result">
+          <div id="resultBoundingBoxes"></div>
+        </div>
+      </div>
+
+      <!-- Component Diagnostic Summary -->
+      <div class="glass-card" style="padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="badge badge-danger" id="resultDamageStatus"><i class="fa-solid fa-circle-exclamation"></i> Damaged - Thermal Burn</span>
+            <span style="font-weight: 700; color: var(--color-accent);" id="resultConfidence">Confidence: 94.5%</span>
+          </div>
+
+          <h2 style="font-size: 1.8rem; margin-top: 1rem;" id="resultComponentName">Voltage Regulator IC</h2>
+          <p style="color: var(--color-text-muted); font-size: 1rem;" id="resultPartNumber">Part #: LM7805</p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm);">
+              <div style="color: var(--color-text-muted); font-size: 0.85rem;">Severity Level</div>
+              <div style="font-size: 1.2rem; font-weight: 700; color: var(--color-danger);" id="resultSeverity">High</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm);">
+              <div style="color: var(--color-text-muted); font-size: 0.85rem;">Estimated Repair Cost</div>
+              <div style="font-size: 1.2rem; font-weight: 700; color: var(--color-success);" id="resultRepairCost">$15 - $25 (₹120 - ₹250)</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm);">
+              <div style="color: var(--color-text-muted); font-size: 0.85rem;">Estimated Time</div>
+              <div style="font-size: 1.2rem; font-weight: 700; color: #FFF;" id="resultRepairTime">30 - 60 mins</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm);">
+              <div style="color: var(--color-text-muted); font-size: 0.85rem;">Detection Model</div>
+              <div style="font-size: 1.2rem; font-weight: 700; color: var(--color-accent);">YOLO v8 + OCR</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+          <button class="btn btn-accent" style="flex:1;" onclick="viewComponentDetails()"><i class="fa-solid fa-sliders"></i> View Technical Specs</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="navigateTo('repair-guide')"><i class="fa-solid fa-wrench"></i> Start Repair Guide</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs Container -->
+    <div class="tabs-container">
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="switchTab('overviewTab')">Overview</button>
+        <button class="tab-btn" onclick="switchTab('damageCauseTab')">Damage Cause</button>
+        <button class="tab-btn" onclick="switchTab('repairStepsTab')">Repair Steps</button>
+        <button class="tab-btn" onclick="switchTab('compatiblePartsTab')">Compatible Parts</button>
+        <button class="tab-btn" onclick="switchTab('datasheetTab')">Datasheet</button>
+      </div>
+
+      <div id="overviewTab" class="tab-content active glass-card" style="padding: 1.5rem;">
+        <h3>Component Function & Diagnostic Overview</h3>
+        <p style="margin-top: 0.75rem; color: var(--color-text-muted);" id="resultOverviewText">
+          The LM7805 voltage regulator regulates input voltage (7V - 25V) down to a smooth 5.0V DC rail for logic processors. The computer vision analysis detected severe thermal discoloration and epoxy body melting.
+        </p>
+      </div>
+
+      <div id="damageCauseTab" class="tab-content glass-card" style="padding: 1.5rem;">
+        <h3>Root Cause Analysis</h3>
+        <p style="margin-top: 0.75rem; color: var(--color-text-muted);" id="resultCauseText">
+          Prolonged thermal overload exceeding 150°C junction limit due to inadequate heat dissipation and dried thermal compound paste.
+        </p>
+      </div>
+
+      <div id="repairStepsTab" class="tab-content glass-card" style="padding: 1.5rem;">
+        <h3>Recommended Repair Procedure Summary</h3>
+        <ol style="margin-top: 0.75rem; padding-left: 1.25rem; color: var(--color-text-muted);" id="resultStepsList">
+          <li>Power down device and discharge all high-voltage capacitors.</li>
+          <li>Desolder damaged LM7805 IC with soldering iron set to 350°C and desoldering pump.</li>
+          <li>Clean PCB copper pads thoroughly using 99% Isopropyl Alcohol (IPA).</li>
+          <li>Apply fresh thermal grease to new LM7805 backplate.</li>
+          <li>Solder new component into place and verify 5.00V DC rail under load.</li>
+        </ol>
+      </div>
+
+      <div id="compatiblePartsTab" class="tab-content glass-card" style="padding: 1.5rem;">
+        <h3>Compatible Replacement Options</h3>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+          <div class="glass-card" style="padding: 1rem; flex:1;">
+            <h4>LM7805-TO220 (OEM Direct)</h4>
+            <p style="color: var(--color-text-muted); font-size: 0.9rem;">Original Texas Instruments Part</p>
+            <div style="color: var(--color-accent); font-weight: 700; margin-top: 0.5rem;">$0.25 / ₹20</div>
+            <button class="btn btn-primary btn-sm" style="margin-top: 0.75rem;" onclick="navigateTo('marketplace')">Buy Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="datasheetTab" class="tab-content glass-card" style="padding: 1.5rem;">
+        <h3>Technical Datasheet Document</h3>
+        <p style="color: var(--color-text-muted); margin-bottom: 1rem;">Official Texas Instruments LM7805 Specification PDF.</p>
+        <a id="resultDatasheetLink" href="https://www.ti.com/lit/ds/symlink/lm7805.pdf" target="_blank" class="btn btn-outline btn-sm">
+          <i class="fa-solid fa-file-pdf"></i> Open Official Datasheet PDF
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. COMPONENT DETAILS VIEW -->
+  <section id="view-component-details" class="page-view">
+    <button class="btn btn-outline btn-sm" onclick="navigateTo('scan-result')" style="margin-bottom: 1rem;">
+      <i class="fa-solid fa-arrow-left"></i> Back to Scan Results
+    </button>
+    
+    <h2 class="section-title" id="compDetailTitle">Voltage Regulator IC (LM7805)</h2>
+    <p class="section-subtitle">Complete Datasheet & Engineering Pinout Specifications</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <div class="glass-card" style="padding: 1.75rem;">
+        <h3>Component Specifications</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem;">
+          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Category</td><td style="font-weight: 600;" id="compCategory">IC</td></tr>
+          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Package Type</td><td style="font-weight: 600;" id="compPackage">TO-220</td></tr>
+          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Input Voltage</td><td style="font-weight: 600;">7V - 25V DC</td></tr>
+          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Output Voltage</td><td style="font-weight: 600;">5.0V DC (±4%)</td></tr>
+          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Max Output Current</td><td style="font-weight: 600;">1.5 Amperes</td></tr>
+          <tr><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Max Operating Temp</td><td style="font-weight: 600;">150°C</td></tr>
+        </table>
+      </div>
+
+      <div class="glass-card" style="padding: 1.75rem;">
+        <h3>Pinout Configuration</h3>
+        <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.85rem;" id="pinoutList">
+          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between;">
+            <span style="font-weight: 700; color: var(--color-accent);">Pin 1: Input (VI)</span>
+            <span style="color: var(--color-text-muted);">Unregulated 7-25V DC</span>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between;">
+            <span style="font-weight: 700; color: var(--color-accent);">Pin 2: Ground (GND)</span>
+            <span style="color: var(--color-text-muted);">Common Circuit Ground</span>
+          </div>
+          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between;">
+            <span style="font-weight: 700; color: var(--color-accent);">Pin 3: Output (VO)</span>
+            <span style="color: var(--color-text-muted);">Regulated 5.0V DC</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. AI ASSISTANT VIEW -->
+  <section id="view-assistant" class="page-view">
+    <h2 class="section-title">AI Electronics Assistant</h2>
+    <p class="section-subtitle">Ask technical hardware questions, verify component replacements, and receive step-by-step guidance.</p>
+
+    <div class="chip-group">
+      <div class="chip" onclick="sendSuggestedQuery('Why is my TV not turning on?')">Why is my TV not turning on?</div>
+      <div class="chip" onclick="sendSuggestedQuery('What is an LM7805 IC?')">What is an LM7805 IC?</div>
+      <div class="chip" onclick="sendSuggestedQuery('Can I replace a 16V capacitor with a 25V one?')">Can I replace a 16V capacitor with a 25V one?</div>
+      <div class="chip" onclick="sendSuggestedQuery('How do I test an N-Channel MOSFET with a multimeter?')">How do I test a MOSFET?</div>
+    </div>
+
+    <div class="chat-container glass-card">
+      <div class="chat-sidebar" style="border-right: 1px solid var(--color-border);">
+        <button class="btn btn-primary btn-sm" onclick="startNewChatSession()"><i class="fa-solid fa-plus"></i> New Chat</button>
+        <div class="chat-history-list" id="chatHistoryList">
+          <div class="chat-history-item active">LM7805 IC Diagnosis</div>
+          <div class="chat-history-item">TV Power Supply Troubleshooting</div>
+          <div class="chat-history-item">MOSFET Gate Testing</div>
+        </div>
+      </div>
+
+      <div class="chat-main">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-bubble ai">
+            Hello! I'm FixAI Assistant. Ask me anything about electronic components, circuit testing, or repair procedures. You can also click the microphone to speak!
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" class="chat-input-field" id="chatInput" placeholder="Ask technical question or paste component part number..." onkeydown="handleChatKeyDown(event)">
+          <button class="voice-wave-btn" id="voiceMicBtn" onclick="toggleVoiceInput()" title="Voice Input (Speech-to-Text)">
+            <i class="fa-solid fa-microphone"></i>
+          </button>
+          <button class="btn btn-accent" onclick="sendChatMessage()">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. REPAIR GUIDE VIEW -->
+  <section id="view-repair-guide" class="page-view">
+    <h2 class="section-title">Interactive Repair Guide</h2>
+    <p class="section-subtitle">How to Replace Damaged LM7805 Voltage Regulator IC</p>
+
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+      <span class="badge badge-warning"><i class="fa-solid fa-gauge-simple-high"></i> Intermediate</span>
+      <span class="badge badge-success"><i class="fa-solid fa-clock"></i> 30 - 60 mins</span>
+    </div>
+
+    <!-- Required Tools Checklist -->
+    <div class="glass-card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+      <h3><i class="fa-solid fa-toolbox"></i> Required Tools Checklist</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
+          <input type="checkbox"> Soldering Iron (350°C)
+        </label>
+        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
+          <input type="checkbox"> Desoldering Pump / Wick
+        </label>
+        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
+          <input type="checkbox"> Digital Multimeter
+        </label>
+        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
+          <input type="checkbox"> Thermal Grease Paste
+        </label>
+        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
+          <input type="checkbox"> 99% IPA & ESD Brush
+        </label>
+      </div>
+    </div>
+
+    <!-- Step by Step Workflow -->
+    <div class="glass-card" style="padding: 1.75rem;">
+      <h3>Step-by-Step Instructions</h3>
+      <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.25rem;">
+        <div style="border-left: 3px solid var(--color-accent); padding-left: 1rem;">
+          <h4 style="color: var(--color-accent);">Step 1: Discharge Power Supply Capacitors</h4>
+          <p style="color: var(--color-text-muted); margin-top: 0.35rem;">Unplug all power cables. Use a 1kΩ 5W resistor across the main capacitor terminals to discharge residual high voltage.</p>
+        </div>
+
+        <div style="border-left: 3px solid var(--color-accent); padding-left: 1rem;">
+          <h4 style="color: var(--color-accent);">Step 2: Desolder Damaged IC</h4>
+          <p style="color: var(--color-text-muted); margin-top: 0.35rem;">Apply fresh flux to all 3 pins. Heat with soldering iron set to 350°C and suction away old solder with desoldering pump.</p>
+        </div>
+
+        <div style="border-left: 3px solid var(--color-accent); padding-left: 1rem;">
+          <h4 style="color: var(--color-accent);">Step 3: Clean Pads & Install Replacement</h4>
+          <p style="color: var(--color-text-muted); margin-top: 0.35rem;">Clean copper pads with IPA. Coat backplate with thermal paste and solder new LM7805 IC firmly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. MARKETPLACE VIEW -->
+  <section id="view-marketplace" class="page-view">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h2 class="section-title">Replacement Parts Marketplace</h2>
+        <p class="section-subtitle">Find high-quality OEM and aftermarket electronic components.</p>
+      </div>
+      <button class="btn btn-accent btn-sm" onclick="toggleCartDrawer()">
+        <i class="fa-solid fa-cart-shopping"></i> View Cart (<span id="cartCount">0</span>)
+      </button>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+      <input type="text" id="marketSearchInput" class="chat-input-field" placeholder="Search components by name or part number..." onkeyup="filterMarketplace()">
+      <select id="marketCategorySelect" class="chat-input-field" style="max-width: 200px;" onchange="filterMarketplace()">
+        <option value="All">All Categories</option>
+        <option value="IC">ICs</option>
+        <option value="Capacitor">Capacitors</option>
+        <option value="MOSFET">MOSFETs</option>
+        <option value="Diode">Diodes</option>
+      </select>
+    </div>
+
+    <div class="catalog-grid" id="marketProductGrid">
+      <!-- Injected dynamically via JS -->
+    </div>
+  </section>
+
+  <!-- 8. SERVICE CENTERS VIEW -->
+  <section id="view-service-centers" class="page-view">
+    <h2 class="section-title">Nearby Service Centers</h2>
+    <p class="section-subtitle">Find certified electronics repair shops and chip-level technicians near you.</p>
+
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+      <input type="text" id="storeSearchInput" class="chat-input-field" placeholder="Search by city or landmark (e.g., Chennai)..." onkeyup="filterStores()">
+      <button class="btn btn-primary" onclick="filterStores()"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    </div>
+
+    <div class="map-layout">
+      <div class="store-list" id="storeListContainer">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="glass-card" style="padding: 0; position: relative;">
+        <canvas id="mapCanvas" class="map-view-canvas"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. USER DASHBOARD VIEW -->
+  <section id="view-dashboard" class="page-view">
+    <h2 class="section-title">Technician Dashboard</h2>
+    <p class="section-subtitle">Manage your scan history, saved reports, and user profile settings.</p>
+
+    <div class="metrics-grid">
+      <div class="metric-card glass-card">
+        <div style="color: var(--color-text-muted);">Total Scans</div>
+        <div class="metric-value" id="dashTotalScans">24</div>
+      </div>
+      <div class="metric-card glass-card">
+        <div style="color: var(--color-text-muted);">Issues Found</div>
+        <div class="metric-value" style="color: var(--color-danger);" id="dashIssuesFound">18</div>
+      </div>
+      <div class="metric-card glass-card">
+        <div style="color: var(--color-text-muted);">Repaired</div>
+        <div class="metric-value" style="color: var(--color-success);" id="dashRepaired">12</div>
+      </div>
+      <div class="metric-card glass-card">
+        <div style="color: var(--color-text-muted);">In Progress</div>
+        <div class="metric-value" style="color: var(--color-warning);" id="dashInProgress">4</div>
+      </div>
+    </div>
+
+    <div class="glass-card" style="padding: 1.75rem;">
+      <h3>Recent Scan Reports</h3>
+      <table style="width:100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--color-border); text-align: left; color: var(--color-text-muted);">
+            <th style="padding: 0.75rem;">Device Name</th>
+            <th style="padding: 0.75rem;">Component</th>
+            <th style="padding: 0.75rem;">Status</th>
+            <th style="padding: 0.75rem;">Confidence</th>
+            <th style="padding: 0.75rem;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="dashScanTable">
+          <!-- Injected dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 10. ABOUT VIEW -->
+  <section id="view-about" class="page-view">
+    <div style="max-width: 800px; margin: 0 auto;">
+      <h2 class="section-title">About FixAI</h2>
+      <p class="section-subtitle">Empowering technicians and hobbyists with state-of-the-art Computer Vision & Generative AI for electronic circuit repair.</p>
+      
+      <div class="glass-card" style="padding: 2rem; margin-top: 1.5rem; line-height: 1.8;">
+        <p>FixAI utilizes deep neural networks (YOLO object detection) and specialized LLMs to scan printed circuit boards, identify microscopic component damage, provide exact replacement specs, and suggest step-by-step soldering guidelines.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODALS -->
+
+  <!-- Auth Login Modal -->
+  <div class="modal-backdrop" id="loginModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
+      <h2>Welcome Back to FixAI</h2>
+      <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">Sign in to save your scan history</p>
+
+      <form onsubmit="handleLoginSubmit(event)">
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Email Address</label>
+          <input type="email" id="loginEmail" required class="chat-input-field" style="width:100%; margin-top:0.35rem;" value="karthik@example.com">
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Password</label>
+          <input type="password" id="loginPass" required class="chat-input-field" style="width:100%; margin-top:0.35rem;" value="password123">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+        <button type="button" class="btn btn-outline" style="width: 100%; margin-top:0.75rem;" onclick="guestLogin()">Continue as Guest</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div class="modal-backdrop" id="registerModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('registerModal')">&times;</button>
+      <h2>Create FixAI Account</h2>
+      <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">Join thousands of electronics technicians</p>
+
+      <form onsubmit="handleRegisterSubmit(event)">
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Full Name</label>
+          <input type="text" id="regName" required class="chat-input-field" style="width:100%; margin-top:0.35rem;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Email Address</label>
+          <input type="email" id="regEmail" required class="chat-input-field" style="width:100%; margin-top:0.35rem;">
+        </div>
+        <div style="margin-bottom: 1.5rem;">
+          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Password</label>
+          <input type="password" id="regPass" required class="chat-input-field" style="width:100%; margin-top:0.35rem;">
+        </div>
+
+        <button type="submit" class="btn btn-accent" style="width: 100%;">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Appointment Booking Modal -->
+  <div class="modal-backdrop" id="appointmentModal">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal('appointmentModal')">&times;</button>
+      <h2 id="appointStoreName">Book Service Appointment</h2>
+      <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">Schedule a chip-level diagnostic with certified technician</p>
+
+      <form onsubmit="handleBookAppointment(event)">
+        <input type="hidden" id="appointStoreId">
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Device Model</label>
+          <input type="text" id="appointDevice" required class="chat-input-field" style="width:100%; margin-top:0.35rem;" value="Smart TV Power Board">
+        </div>
+        <div style="margin-bottom: 1rem;">
+          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Preferred Date</label>
+          <input type="date" id="appointDate" required class="chat-input-field" style="width:100%; margin-top:0.35rem;" value="2026-08-01">
+        </div>
+        <button type="submit" class="btn btn-accent" style="width:100%;">Confirm Appointment</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-content">
+      <div>
+        <div class="nav-brand" style="margin-bottom: 1rem;">
+          <div class="brand-icon"><i class="fa-solid fa-microchip"></i></div>
+          <div>Fix<span>AI</span></div>
+        </div>
+        <p>AI-powered electronics component scanning, damage detection, repair guidance, and replacement parts marketplace.</p>
+      </div>
+
+      <div>
+        <h4 style="color:#FFF; margin-bottom: 1rem;">Quick Links</h4>
+        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('home')">Home</a></p>
+        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('scanner')">AI Scanner</a></p>
+        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('assistant')">AI Assistant</a></p>
+      </div>
+
+      <div>
+        <h4 style="color:#FFF; margin-bottom: 1rem;">Resources</h4>
+        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('repair-guide')">Repair Guides</a></p>
+        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('marketplace')">Marketplace</a></p>
+        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('service-centers')">Service Centers</a></p>
+      </div>
+
+      <div>
+        <h4 style="color:#FFF; margin-bottom: 1rem;">Connect</h4>
+        <p style="margin-bottom:0.5rem;"><i class="fa-solid fa-envelope"></i> support@fixai.tech</p>
+        <p style="margin-bottom:0.5rem;"><i class="fa-solid fa-phone"></i> +1 (800) 555-FIXAI</p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      &copy; 2026 FixAI Technologies Inc. All rights reserved. Designed for Precision Hardware Engineering.
+    </div>
+  </footer>
+
+  <!-- Frontend Logic Scripts -->
+  <script src="/js/app.js"></script>
+  <script src="/js/scan.js"></script>
+  <script src="/js/chat.js"></script>
+  <script src="/js/map.js"></script>
+  <script src="/js/marketplace.js"></script>
+  <script src="/js/dashboard.js"></script>
+
+</body>
+</html>
