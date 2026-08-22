@@ -1,5 +1,5 @@
 # Frist-website
-# 🔧 FixAI - AI Electronics Repair Assistant
+# 🔧 Fixio - AI Electronics Repair Assistant
 
 ![FixAI Banner](assets/banner.png)
 
