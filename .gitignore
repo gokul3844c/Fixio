@@ -22,3 +22,10 @@ Thumbs.db
 *.log
 *.sqlite
 *.db
+
+# Local environment
+.env
+
+# Uploads
+backend/static/uploads/
+

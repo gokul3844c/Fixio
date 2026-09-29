@@ -1,353 +1,504 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fixio – AI Electronics Damage Detection & Repair Assistant</title>
-  <meta name="description" content="AI-powered electronics component scanning, damage detection, repair guidance, replacement parts marketplace, and service center finder.">
-  
-  <!-- FontAwesome Icons & Google Fonts -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="/css/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fixio — Compound Damage Scanner & Repair Assistant</title>
+  <meta name="description" content="Fixio helps users scan compounds or properties, identify visible damage, understand repair procedures, and locate nearby verified service centers with ratings and reviews." />
+  <meta name="keywords" content="property damage, compound scanner, wall crack repair, waterproofing, nearby contractors, repair guides" />
+  <meta property="og:title" content="Fixio — Property Damage Scanner & Repair Assistant" />
+  <meta property="og:description" content="Scan property damage, get AI repair diagnostics, and connect with nearby service centers." />
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Leaflet Open Source Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Google Identity Services (Google Sign-In API) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <link rel="stylesheet" href="/css/styles.css" />
+
+
+  <!-- Inline critical animations -->
+  <style>
+    /* Page loader */
+    #pageLoader {
+      position: fixed; inset: 0; z-index: 99999;
+      background: var(--neo-bg, #E8EDF2);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1.5rem;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #pageLoader.done { opacity: 0; visibility: hidden; }
+    .loader-brand {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2rem; font-weight: 800;
+      color: #4F46E5; letter-spacing: -0.04em;
+    }
+    .loader-bar-track {
+      width: 200px; height: 4px;
+      background: #DDE3EA;
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: inset 2px 2px 5px #C5CDD8, inset -2px -2px 5px #FFFFFF;
+    }
+    .loader-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4F46E5, #7C74FF);
+      border-radius: 999px;
+      animation: loaderFill 1.6s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
+    @keyframes loaderFill {
+      from { width: 0; }
+      to   { width: 100%; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- Sticky Navbar -->
-  <nav class="navbar">
-    <div class="nav-brand">
-      <div class="brand-icon">
-        <i class="fa-solid fa-microchip"></i>
-      </div>
-      <div>Fix<span>io</span></div>
+  <!-- ======================================================
+       PAGE LOADER
+  ====================================================== -->
+  <div id="pageLoader">
+    <div class="loader-brand"><i class="fa-solid fa-house-chimney-crack" style="color:#7C74FF; margin-right:0.4rem;"></i>Fixio</div>
+    <div class="loader-bar-track"><div class="loader-bar-fill"></div></div>
+    <p style="font-size:0.85rem; color:#9BA8BC;">Loading Fixio property assistant…</p>
+  </div>
+
+  <!-- ======================================================
+       NAVBAR
+  ====================================================== -->
+  <nav class="navbar" id="mainNav" role="navigation" aria-label="Main navigation">
+    <div class="nav-brand" onclick="navigateTo('home')" tabindex="0" role="button" aria-label="Fixio Home">
+      <div class="brand-icon"><i class="fa-solid fa-house-chimney-crack"></i></div>
+      <span>Fix<span style="color:var(--color-accent)">io</span></span>
     </div>
-    
-    <ul class="nav-links">
-      <li class="nav-link active" onclick="navigateTo('home')"><i class="fa-solid fa-house"></i> Home</li>
-      <li class="nav-link" onclick="navigateTo('scanner')"><i class="fa-solid fa-expand"></i> AI Scanner</li>
-      <li class="nav-link" onclick="navigateTo('assistant')"><i class="fa-solid fa-robot"></i> AI Assistant</li>
-      <li class="nav-link" onclick="navigateTo('repair-guide')"><i class="fa-solid fa-wrench"></i> Repair Guide</li>
-      <li class="nav-link" onclick="navigateTo('marketplace')"><i class="fa-solid fa-store"></i> Marketplace</li>
-      <li class="nav-link" onclick="navigateTo('service-centers')"><i class="fa-solid fa-location-dot"></i> Service Centers</li>
-      <li class="nav-link" onclick="navigateTo('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
-      <li class="nav-link" onclick="navigateTo('about')"><i class="fa-solid fa-circle-info"></i> About</li>
+
+    <!-- Hamburger -->
+    <button class="nav-toggle" id="navToggle" onclick="toggleMobileMenu()" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <ul class="nav-links" id="navLinks" role="list">
+      <li class="nav-link active" id="nav-home" onclick="navigateTo('home')" role="listitem"><i class="fa-solid fa-house"></i> Home</li>
+      <li class="nav-link" id="nav-scanner" onclick="navigateTo('scanner')" role="listitem"><i class="fa-solid fa-expand"></i> AI Scanner</li>
+      <li class="nav-link" id="nav-repair-guide" onclick="navigateTo('repair-guide')" role="listitem"><i class="fa-solid fa-book-open"></i> Repair Guides</li>
+      <li class="nav-link" id="nav-service-centers" onclick="navigateTo('service-centers')" role="listitem"><i class="fa-solid fa-location-dot"></i> Service Centers</li>
+      <li class="nav-link" id="nav-shop" onclick="navigateTo('shop')" role="listitem"><i class="fa-solid fa-store"></i> Materials</li>
+      <li class="nav-link" id="nav-assistant" onclick="navigateTo('assistant')" role="listitem"><i class="fa-solid fa-robot"></i> AI Chat</li>
+      <li class="nav-link" id="nav-dashboard" onclick="navigateTo('dashboard')" role="listitem"><i class="fa-solid fa-chart-line"></i> Dashboard</li>
     </ul>
 
     <div class="nav-auth" id="navAuthSection">
-      <button class="btn btn-outline btn-sm" onclick="openModal('loginModal')">Login</button>
-      <button class="btn btn-primary btn-sm" onclick="openModal('registerModal')">Register</button>
+      <!-- Search -->
+      <button class="btn btn-secondary btn-icon" id="navSearchBtn" onclick="toggleNavSearch()" aria-label="Search" title="Search guides & centers">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <!-- Auth -->
+      <button class="btn btn-outline btn-sm" id="navLoginBtn" onclick="openModal('loginModal')">Login</button>
+      <button class="btn btn-primary btn-sm" id="navRegisterBtn" onclick="openModal('registerModal')">Register</button>
+      <!-- Logged-in avatar (hidden by default) -->
+      <div id="navUserAvatar" style="display:none; cursor:pointer;" onclick="navigateTo('dashboard')">
+        <div style="width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#5B53F0,#7C74FF); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:1rem; box-shadow: 3px 3px 8px rgba(79,70,229,0.4);" id="navAvatarInitials">K</div>
+      </div>
     </div>
   </nav>
 
-  <!-- Notification Toast Container -->
-  <div class="toast-container" id="toastContainer"></div>
 
-  <!-- MAIN VIEW CONTAINERS -->
+  <!-- Nav search bar (slide down) -->
+  <div id="navSearchBar" style="display:none; background:var(--neo-bg); padding:0.85rem clamp(1rem,4vw,2.5rem); box-shadow: 0 4px 16px rgba(197,205,216,0.5); border-bottom: 1.5px solid var(--neo-shadow-dark);">
+    <div class="search-input-wrap" style="max-width:600px; margin:0 auto;">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" class="search-input" id="globalSearchInput" placeholder="Search products, part numbers, categories…" oninput="handleGlobalSearch(this.value)" onkeydown="handleSearchKey(event)" autocomplete="off" />
+    </div>
+  </div>
 
-  <!-- 1. HOME VIEW -->
-  <section id="view-home" class="page-view active">
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
+
+  <!-- ======================================================
+       CART DRAWER
+  ====================================================== -->
+  <div class="cart-drawer-overlay" id="cartOverlay" onclick="toggleCartDrawer()"></div>
+  <aside class="cart-drawer" id="cartDrawer" role="complementary" aria-label="Shopping cart">
+    <div class="cart-drawer-header">
+      <h3><i class="fa-solid fa-cart-shopping" style="color:var(--color-accent);"></i> Your Cart <span id="cartItemCountLabel" style="color:var(--color-text-muted); font-size:0.85rem; font-weight:500;"></span></h3>
+      <button class="cart-drawer-close" onclick="toggleCartDrawer()" aria-label="Close cart"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="cart-drawer-body" id="cartDrawerBody">
+      <div class="cart-empty" id="cartEmptyMsg">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <p style="font-weight:600; margin-bottom:0.5rem;">Your cart is empty</p>
+        <p style="font-size:0.85rem;">Add items to get started!</p>
+        <button class="btn btn-primary btn-sm" style="margin-top:1rem;" onclick="navigateTo('shop'); toggleCartDrawer();">Browse Products</button>
+      </div>
+      <div id="cartItemsList"></div>
+    </div>
+    <div class="cart-drawer-footer">
+      <div class="cart-total-row">
+        <span class="cart-total-label">Subtotal (<span id="cartTotalItems">0</span> items)</span>
+        <span class="cart-total-val" id="cartTotalPrice">$0.00</span>
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="openModal('checkoutModal')" id="checkoutBtn" disabled>
+        <i class="fa-solid fa-lock"></i> Secure Checkout
+      </button>
+      <p style="text-align:center; font-size:0.75rem; color:var(--color-text-faint); margin-top:0.75rem;">
+        <i class="fa-solid fa-shield-halved"></i> SSL Secured &nbsp;|&nbsp; <i class="fa-solid fa-rotate-left"></i> 30-day Returns
+      </p>
+    </div>
+  </aside>
+
+  <!-- ======================================================
+       VIEW CONTAINERS
+  ====================================================== -->
+
+  <!-- ── 1. HOME VIEW ── -->
+  <section id="view-home" class="page-view active" role="main">
+
+    <!-- Hero -->
     <div class="hero">
       <div class="hero-content">
-        <h1>AI Electronics Repair Assistant</h1>
-        <p>Scan electronic components using Computer Vision, detect damaged hardware, receive step-by-step repair guidance, find replacement parts, and connect with nearby certified service centers.</p>
+        <div class="hero-badge heartbeat">
+          <i class="fa-solid fa-star" style="color:#F59E0B;"></i>
+          Trusted by 50,000+ technicians worldwide
+        </div>
+        <h1>
+          Shop Premium<br/>
+          <span class="gradient-text">Electronics</span><br/>
+          Parts & Tools
+        </h1>
+        <p>Discover thousands of high-quality electronic components, repair tools, and replacement parts — delivered fast with AI-powered compatibility matching.</p>
         <div class="hero-actions">
-          <button class="btn btn-accent" onclick="navigateTo('scanner')">
-            <i class="fa-solid fa-camera"></i> Scan Now
+          <button class="btn btn-primary btn-lg" onclick="navigateTo('shop')">
+            <i class="fa-solid fa-store"></i> Shop Now
           </button>
-          <button class="btn btn-outline" onclick="navigateTo('assistant')">
-            <i class="fa-solid fa-comments"></i> Ask AI Assistant
+          <button class="btn btn-secondary btn-lg" onclick="navigateTo('scanner')">
+            <i class="fa-solid fa-camera"></i> AI Scanner
           </button>
         </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-value">50K+</div>
+            <div class="hero-stat-label">Customers</div>
+          </div>
+          <div class="hero-stat" style="border-left:1.5px solid var(--neo-shadow-dark); padding-left:2rem;">
+            <div class="hero-stat-value">12K+</div>
+            <div class="hero-stat-label">Products</div>
+          </div>
+          <div class="hero-stat" style="border-left:1.5px solid var(--neo-shadow-dark); padding-left:2rem;">
+            <div class="hero-stat-value">4.9★</div>
+            <div class="hero-stat-label">Rating</div>
+          </div>
+        </div>
       </div>
-
       <div class="hero-visual">
-        <div class="hero-circuit-card glass-card">
+        <div class="hero-blob hero-blob-1"></div>
+        <div class="hero-blob hero-blob-2"></div>
+        <div class="hero-circuit-card float-anim">
           <canvas id="heroCanvas" class="hero-circuit-canvas"></canvas>
         </div>
       </div>
     </div>
 
-    <!-- Features Section -->
-    <div style="margin-top: 4rem;">
-      <h2 class="section-title">Intelligent Repair Platform</h2>
-      <p class="section-subtitle">Everything you need to diagnose, source, and repair electronics in one unified workflow.</p>
+    <!-- Promo Banner -->
+    <div class="promo-banner" style="margin-top:2.5rem;">
+      <div>
+        <div style="font-size:0.82rem; color:rgba(255,255,255,0.7); font-weight:600; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">Limited Time Offer</div>
+        <h3>Mega Sale — Up to 40% OFF</h3>
+        <p>On all ICs, capacitors, and MOSFET modules. Use code <strong style="background:rgba(255,255,255,0.2); padding:0.1rem 0.5rem; border-radius:4px;">NEOSHOP40</strong></p>
+      </div>
+      <div>
+        <div id="countdownTimer" style="font-family:'Outfit',sans-serif; font-size:1.6rem; font-weight:800; color:#fff; letter-spacing:0.05em; text-align:center; margin-bottom:0.5rem;">23:47:12</div>
+        <button class="promo-btn" onclick="navigateTo('shop')"><i class="fa-solid fa-bolt-lightning"></i> Grab Deals</button>
+      </div>
+    </div>
 
-      <div class="features-grid">
-        <div class="feature-card glass-card" onclick="navigateTo('scanner')">
-          <div class="feature-icon"><i class="fa-solid fa-microchip"></i></div>
-          <h3>AI Component Detection</h3>
-          <p>Detect ICs, capacitors, resistors, MOSFETs, diodes, fuses, and connectors automatically from photos.</p>
-        </div>
+    <!-- Featured Categories -->
+    <div style="margin-top:3rem;">
+      <h2 class="section-title">Browse Categories</h2>
+      <p class="section-subtitle">Find exactly what you need across our curated product categories.</p>
+      <div class="features-grid" id="categoriesGrid">
+        <!-- Injected by JS -->
+      </div>
+    </div>
 
-        <div class="feature-card glass-card" onclick="navigateTo('scanner')">
-          <div class="feature-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-          <h3>Damage Analysis</h3>
-          <p>Identify charred ICs, bulging capacitors, blown fuses, and calculate estimated repair cost & time.</p>
+    <!-- Featured Products -->
+    <div style="margin-top:3.5rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <h2 class="section-title">Featured Products</h2>
+          <p style="color:var(--color-text-muted); font-size:0.95rem;">Handpicked bestsellers and trending components.</p>
         </div>
+        <button class="btn btn-outline" onclick="navigateTo('shop')">View All <i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+      <div class="catalog-grid" id="featuredProductsGrid">
+        <!-- Injected by JS -->
+      </div>
+    </div>
 
-        <div class="feature-card glass-card" onclick="navigateTo('assistant')">
-          <div class="feature-icon"><i class="fa-solid fa-headset"></i></div>
-          <h3>AI Technical Assistant</h3>
-          <p>Ask complex hardware questions, verify pinouts, and receive interactive repair advice via text or voice.</p>
-        </div>
-
-        <div class="feature-card glass-card" onclick="navigateTo('repair-guide')">
-          <div class="feature-icon"><i class="fa-solid fa-book-open-reader"></i></div>
-          <h3>Step-by-Step Guides</h3>
-          <p>Detailed desoldering and replacement procedures equipped with safety tips and tool checklists.</p>
-        </div>
-
-        <div class="feature-card glass-card" onclick="navigateTo('marketplace')">
-          <div class="feature-icon"><i class="fa-solid fa-basket-shopping"></i></div>
-          <h3>Parts Marketplace</h3>
-          <p>Order compatible replacement components directly with verified stock and fast local shipping.</p>
-        </div>
-
-        <div class="feature-card glass-card" onclick="navigateTo('service-centers')">
-          <div class="feature-icon"><i class="fa-solid fa-map-location-dot"></i></div>
-          <h3>Service Centers</h3>
-          <p>Locate nearby authorized electronics repair shops and schedule chip-level repair appointments.</p>
-        </div>
+    <!-- Trust Badges Row -->
+    <div style="margin-top:3.5rem; display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1.25rem;">
+      <div class="neo-card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; color:var(--color-primary); margin-bottom:0.75rem;"><i class="fa-solid fa-truck-fast"></i></div>
+        <h4 style="font-size:0.95rem; margin-bottom:0.35rem;">Free Fast Shipping</h4>
+        <p style="font-size:0.82rem; color:var(--color-text-muted);">Orders above ₹500 ship free within 48h</p>
+      </div>
+      <div class="neo-card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; color:var(--color-success); margin-bottom:0.75rem;"><i class="fa-solid fa-certificate"></i></div>
+        <h4 style="font-size:0.95rem; margin-bottom:0.35rem;">Genuine Parts</h4>
+        <p style="font-size:0.82rem; color:var(--color-text-muted);">100% OEM verified and quality tested</p>
+      </div>
+      <div class="neo-card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; color:var(--color-warning); margin-bottom:0.75rem;"><i class="fa-solid fa-rotate-left"></i></div>
+        <h4 style="font-size:0.95rem; margin-bottom:0.35rem;">30-Day Returns</h4>
+        <p style="font-size:0.82rem; color:var(--color-text-muted);">Hassle-free return policy, no questions asked</p>
+      </div>
+      <div class="neo-card" style="padding:1.5rem; text-align:center;">
+        <div style="font-size:2rem; color:var(--color-danger); margin-bottom:0.75rem;"><i class="fa-solid fa-headset"></i></div>
+        <h4 style="font-size:0.95rem; margin-bottom:0.35rem;">24/7 Expert Support</h4>
+        <p style="font-size:0.82rem; color:var(--color-text-muted);">Technical assistance by certified engineers</p>
       </div>
     </div>
   </section>
 
-  <!-- 2. AI SCANNER VIEW -->
+  <!-- ── 2. SHOP VIEW ── -->
+  <section id="view-shop" class="page-view">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem;">
+      <div>
+        <h2 class="section-title">Product Catalog</h2>
+        <p class="section-subtitle">Explore <span id="productCountLabel" style="color:var(--color-primary); font-weight:700;">12,000+</span> verified components.</p>
+      </div>
+      <div style="display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" onclick="openModal('addProductModal')">
+          <i class="fa-solid fa-plus"></i> Add Product
+        </button>
+        <button class="btn btn-secondary btn-sm" id="gridViewBtn" onclick="setGridView('grid')" title="Grid view">
+          <i class="fa-solid fa-grip"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm" id="listViewBtn" onclick="setGridView('list')" title="List view">
+          <i class="fa-solid fa-list"></i>
+        </button>
+        <div class="cart-btn-wrap">
+          <button class="btn btn-accent btn-sm" onclick="toggleCartDrawer()">
+            <i class="fa-solid fa-cart-shopping"></i> Cart (<span id="cartCount">0</span>)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search + Filter Bar -->
+    <div class="search-filter-bar">
+      <div class="search-input-wrap" style="flex:1;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="marketSearchInput" class="search-input" placeholder="Search by name, part number, brand…" onkeyup="filterMarketplace()" aria-label="Search products" />
+      </div>
+      <select id="marketCategorySelect" class="neo-select" style="max-width:200px; padding-left:1rem;" onchange="filterMarketplace()" aria-label="Filter by category">
+        <option value="All">All Categories</option>
+        <option value="Compound">Thermal Compound</option>
+        <option value="IC">ICs / Microcontrollers</option>
+        <option value="Capacitor">Capacitors</option>
+        <option value="Resistor">Resistors</option>
+        <option value="MOSFET">MOSFETs</option>
+        <option value="Diode">Diodes</option>
+        <option value="Connector">Connectors</option>
+        <option value="Tool">Repair Tools</option>
+      </select>
+      <select id="marketSortSelect" class="neo-select" style="max-width:170px; padding-left:1rem;" onchange="filterMarketplace()" aria-label="Sort products">
+        <option value="default">Sort: Default</option>
+        <option value="price-asc">Price: Low → High</option>
+        <option value="price-desc">Price: High → Low</option>
+        <option value="rating">Top Rated</option>
+        <option value="name">Name A → Z</option>
+      </select>
+    </div>
+
+    <!-- Category chips -->
+    <div class="filter-chips" id="shopCategoryChips" role="group" aria-label="Category filters">
+      <!-- Injected by JS -->
+    </div>
+
+    <!-- Product Grid -->
+    <div class="catalog-grid" id="marketProductGrid" role="list" aria-label="Products"></div>
+
+    <!-- Load more -->
+    <div style="text-align:center; margin-top:2.5rem;">
+      <button class="btn btn-outline btn-lg" id="loadMoreBtn" onclick="loadMoreProducts()" style="min-width:200px;">
+        <i class="fa-solid fa-arrows-rotate"></i> Load More Products
+      </button>
+    </div>
+  </section>
+
+  <!-- ── 3. AI SCANNER VIEW ── -->
   <section id="view-scanner" class="page-view">
     <div class="scanner-container">
-      <h2 class="section-title">AI Electronics Scanner</h2>
-      <p class="section-subtitle">Upload or capture an image of your PCB board to identify damaged components automatically.</p>
+      <h2 class="section-title" id="scannerMainTitle">Fixio AI Scanner & Analysis Engine</h2>
+      <p class="section-subtitle" id="scannerMainSubtitle">Choose analysis mode below or upload an image. Motherboards and electronic components will automatically route to Component Datasheet Search.</p>
 
-      <div class="dropzone glass-card" id="dropzone" onclick="triggerFileInput()">
-        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
-        <div class="dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-        <h3>Drag & Drop your PCB image here</h3>
-        <p style="color: var(--color-text-muted); margin-top: 0.5rem;">or click to browse from device (JPG, PNG, WEBP)</p>
+      <!-- Mode Selector Tabs -->
+      <div style="display:flex; justify-content:center; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="modePropertyBtn" onclick="setScanMode('property')" style="border-radius:var(--radius-full); padding:0.6rem 1.4rem;">
+          <i class="fa-solid fa-house-chimney-crack"></i> 1. Property Damage Scan
+        </button>
+        <button class="btn btn-outline" id="modeDatasheetBtn" onclick="setScanMode('datasheet')" style="border-radius:var(--radius-full); padding:0.6rem 1.4rem;">
+          <i class="fa-solid fa-microchip"></i> 2. Component Datasheet Search
+        </button>
+      </div>
+
+      <!-- Manual Part Number Search Bar (Shown in Component Datasheet mode) -->
+      <div id="manualSearchSection" style="display:none; margin-bottom:1.5rem; text-align:left;" class="glass-card" style="padding:1.25rem;">
+        <h3 style="font-size:1.05rem; margin-bottom:0.6rem; color:var(--color-text-main); display:flex; align-items:center; gap:0.5rem;">
+          <i class="fa-solid fa-magnifying-glass" style="color:var(--color-primary);"></i> Manual Component Part Number Search
+        </h3>
+        <p style="font-size:0.85rem; color:var(--color-text-muted); margin-bottom:0.85rem;">Enter a semiconductor or component part number (e.g., LM317, NE555, STM32F103, ESP32, ATmega328P, IRF540N, 2N2222) to retrieve official datasheets instantly.</p>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <div class="search-input-wrap" style="flex:1; min-width:240px;">
+            <i class="fa-solid fa-microchip"></i>
+            <input type="text" id="manualPartInput" class="search-input" placeholder="Type part number e.g. LM317, NE555, STM32..." onkeydown="if(event.key==='Enter') searchPartNumberManual()" />
+          </div>
+          <button class="btn btn-primary" onclick="searchPartNumberManual()">
+            <i class="fa-solid fa-search"></i> Search Datasheet
+          </button>
+        </div>
+      </div>
+
+      <div class="dropzone glass-card" id="dropzone" onclick="triggerFileInput()" ondragover="handleDragOver(event)" ondrop="handleDrop(event)" role="button" aria-label="Upload image" tabindex="0" onkeydown="if(event.key==='Enter') triggerFileInput()">
+        <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)" />
+        <div class="dropzone-icon" id="dropzoneIcon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <h3 id="dropzoneTitle">Drag & Drop Image Here</h3>
+        <p id="dropzoneSubtitle" style="color:var(--color-text-muted); margin-top:0.5rem; font-size:0.9rem;">or click to browse from your device (JPG, PNG, WEBP, BMP)</p>
+        <p style="font-size:0.78rem; color:var(--color-text-faint); margin-top:0.75rem;">Max file size: 10MB</p>
       </div>
 
       <div class="scanner-actions">
-        <button class="btn btn-secondary" onclick="triggerFileInput()">
-          <i class="fa-solid fa-folder-open"></i> Upload Image
-        </button>
-        <button class="btn btn-secondary" onclick="openCameraModal()">
-          <i class="fa-solid fa-camera"></i> Open Camera
-        </button>
-        <button class="btn btn-accent" id="startScanBtn" onclick="executeScanProcess()">
-          <i class="fa-solid fa-play"></i> Start AI Scan
-        </button>
+        <button class="btn btn-secondary" onclick="triggerFileInput()"><i class="fa-solid fa-folder-open"></i> Upload Image</button>
+        <button class="btn btn-secondary" onclick="openCameraModal()"><i class="fa-solid fa-camera"></i> Open Camera</button>
+        <button class="btn btn-primary" id="startScanBtn" onclick="executeScanProcess()"><i class="fa-solid fa-play"></i> Start Analysis</button>
       </div>
 
-      <!-- Preview & Scanning Animation Area -->
-      <div id="scanPreviewArea" style="display: none; margin-top: 2rem;">
-        <div class="scan-display-area">
-          <img id="previewImage" class="scan-image" src="" alt="PCB Scan">
-          <div id="laserBeam" class="scan-laser-beam"></div>
-          <div id="boundingOverlay" style="position: absolute; top:0; left:0; width:100%; height:100%;"></div>
+      <div id="scanPreviewArea" style="display:none; margin-top:2rem;">
+        <div class="scan-display-area" style="border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--neo-shadow);">
+          <img id="previewImage" class="scan-image" src="" alt="Scan Preview" />
+          <div id="laserBeam" class="scan-laser-beam" style="display:none;"></div>
+          <div id="boundingOverlay" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;"></div>
         </div>
-        <div id="scanProgressMsg" style="text-align: center; margin-top: 1rem; color: var(--color-accent); font-weight: 600;"></div>
+        <div id="scanProgressMsg" style="text-align:center; margin-top:1rem; color:var(--color-primary); font-weight:600; font-size:0.95rem;"></div>
       </div>
     </div>
   </section>
 
-  <!-- 3. SCAN RESULT VIEW -->
+  <!-- ── 4. SCAN RESULT VIEW ── -->
   <section id="view-scan-result" class="page-view">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
       <div>
-        <h2 class="section-title" id="resultDeviceName">Smart TV Main Motherboard Rev 4.1</h2>
-        <p class="section-subtitle">AI Analysis Report ID #SR-94821</p>
+        <div class="breadcrumb">
+          <a onclick="navigateTo('scanner')">Scanner</a>
+          <span class="breadcrumb-sep"><i class="fa-solid fa-chevron-right"></i></span>
+          <span>Electronic Component Results</span>
+        </div>
+        <h2 class="section-title" id="resultDeviceName">Electronic Component</h2>
+        <p class="section-subtitle"><span id="resultPartNumber">Scan ID #SR-10021</span> · <span id="resultTimestamp"></span></p>
       </div>
-      <div style="display: flex; gap: 0.75rem;">
-        <button class="btn btn-outline btn-sm" onclick="navigateTo('assistant')"><i class="fa-solid fa-robot"></i> Ask AI</button>
+      <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="navigateTo('assistant')"><i class="fa-solid fa-robot"></i> Ask AI Assistant</button>
         <button class="btn btn-secondary btn-sm" onclick="downloadPDFReport()"><i class="fa-solid fa-file-pdf"></i> Download Report</button>
-        <button class="btn btn-primary btn-sm" onclick="saveToHistory()"><i class="fa-solid fa-bookmark"></i> Save History</button>
+        <button class="btn btn-primary btn-sm" onclick="saveToHistory()"><i class="fa-solid fa-bookmark"></i> Save Scan</button>
       </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-      <!-- Bounding Box Image View -->
-      <div class="glass-card" style="padding: 1.25rem;">
-        <h3 style="margin-bottom: 1rem;"><i class="fa-solid fa-crosshairs"></i> Computer Vision Inspection</h3>
-        <div class="scan-display-area" style="position: relative;" id="resultImageContainer">
-          <img id="resultImage" class="scan-image" src="/assets/scans/pcb_sample1.jpg" alt="Scan Result">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2rem;">
+      <div class="glass-card" style="padding:1.5rem;">
+        <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-crosshairs" style="color:var(--color-primary);"></i> Uploaded Component Image</h3>
+        <div class="scan-display-area" style="position:relative;" id="resultImageContainer">
+          <img id="resultImage" class="scan-image" src="" alt="Electronic Component Image" />
           <div id="resultBoundingBoxes"></div>
         </div>
       </div>
-
-      <!-- Component Diagnostic Summary -->
-      <div class="glass-card" style="padding: 1.75rem; display: flex; flex-direction: column; justify-content: space-between;">
+      <div class="glass-card" style="padding:1.75rem; display:flex; flex-direction:column; justify-content:space-between;">
         <div>
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span class="badge badge-danger" id="resultDamageStatus"><i class="fa-solid fa-circle-exclamation"></i> Damaged - Thermal Burn</span>
-            <span style="font-weight: 700; color: var(--color-accent);" id="resultConfidence">Confidence: 94.5%</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+            <span class="badge badge-primary" id="resultDamageStatus"><i class="fa-solid fa-microchip"></i> Component Identification</span>
+            <span style="font-weight:700; color:var(--color-primary);" id="resultConfidence">Identified</span>
+          </div>
+          <h2 style="font-size:1.6rem; margin-top:1rem;" id="resultComponentName">Electronic Component</h2>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.5rem;">
+            <div class="neo-inset" style="padding:1rem;">
+              <div style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:0.25rem;">Severity</div>
+              <div style="font-size:1.2rem; font-weight:800; color:var(--color-info);" id="resultSeverity">INFO</div>
+            </div>
+            <div class="neo-inset" style="padding:1rem;">
+              <div style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:0.25rem;">Est. Repair Cost</div>
+              <div style="font-size:1.1rem; font-weight:800; color:var(--color-text-muted);" id="resultRepairCost">N/A</div>
+            </div>
+            <div class="neo-inset" style="padding:1rem;">
+              <div style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:0.25rem;">Est. Repair Time</div>
+              <div style="font-size:1.1rem; font-weight:800; color:var(--color-text-muted);" id="resultRepairTime">N/A</div>
+            </div>
+            <div class="neo-inset" style="padding:1rem;">
+              <div style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:0.25rem;">AI Vision Engine</div>
+              <div style="font-size:1.1rem; font-weight:800; color:var(--color-accent);" id="resultEngineName">Fixio Electronics Vision</div>
+            </div>
           </div>
 
-          <h2 style="font-size: 1.8rem; margin-top: 1rem;" id="resultComponentName">Voltage Regulator IC</h2>
-          <p style="color: var(--color-text-muted); font-size: 1rem;" id="resultPartNumber">Part #: LM7805</p>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem;">
-            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm);">
-              <div style="color: var(--color-text-muted); font-size: 0.85rem;">Severity Level</div>
-              <div style="font-size: 1.2rem; font-weight: 700; color: var(--color-danger);" id="resultSeverity">High</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm);">
-              <div style="color: var(--color-text-muted); font-size: 0.85rem;">Estimated Repair Cost</div>
-              <div style="font-size: 1.2rem; font-weight: 700; color: var(--color-success);" id="resultRepairCost">$15 - $25 (₹120 - ₹250)</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm);">
-              <div style="color: var(--color-text-muted); font-size: 0.85rem;">Estimated Time</div>
-              <div style="font-size: 1.2rem; font-weight: 700; color: #FFF;" id="resultRepairTime">30 - 60 mins</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-sm);">
-              <div style="color: var(--color-text-muted); font-size: 0.85rem;">Detection Model</div>
-              <div style="font-size: 1.2rem; font-weight: 700; color: var(--color-accent);">YOLO v8 + OCR</div>
-            </div>
+          <div style="margin-top:1.25rem; font-size:0.82rem; color:var(--color-text-muted); font-style:italic;" id="resultDisclaimer">
+            <i class="fa-solid fa-circle-info"></i> Component specifications retrieved from OEM datasheet database.
           </div>
         </div>
-
-        <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-          <button class="btn btn-accent" style="flex:1;" onclick="viewComponentDetails()"><i class="fa-solid fa-sliders"></i> View Technical Specs</button>
-          <button class="btn btn-primary" style="flex:1;" onclick="navigateTo('repair-guide')"><i class="fa-solid fa-wrench"></i> Start Repair Guide</button>
+        <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+          <button class="btn btn-accent" style="flex:1;" onclick="navigateTo('repair-guide')"><i class="fa-solid fa-book-open"></i> Repair Guide</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="navigateTo('shop')"><i class="fa-solid fa-store"></i> Buy Component</button>
         </div>
       </div>
     </div>
 
-    <!-- Tabs Container -->
-    <div class="tabs-container">
-      <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchTab('overviewTab')">Overview</button>
-        <button class="tab-btn" onclick="switchTab('damageCauseTab')">Damage Cause</button>
-        <button class="tab-btn" onclick="switchTab('repairStepsTab')">Repair Steps</button>
-        <button class="tab-btn" onclick="switchTab('compatiblePartsTab')">Compatible Parts</button>
-        <button class="tab-btn" onclick="switchTab('datasheetTab')">Datasheet</button>
-      </div>
-
-      <div id="overviewTab" class="tab-content active glass-card" style="padding: 1.5rem;">
-        <h3>Component Function & Diagnostic Overview</h3>
-        <p style="margin-top: 0.75rem; color: var(--color-text-muted);" id="resultOverviewText">
-          The LM7805 voltage regulator regulates input voltage (7V - 25V) down to a smooth 5.0V DC rail for logic processors. The computer vision analysis detected severe thermal discoloration and epoxy body melting.
-        </p>
-      </div>
-
-      <div id="damageCauseTab" class="tab-content glass-card" style="padding: 1.5rem;">
-        <h3>Root Cause Analysis</h3>
-        <p style="margin-top: 0.75rem; color: var(--color-text-muted);" id="resultCauseText">
-          Prolonged thermal overload exceeding 150°C junction limit due to inadequate heat dissipation and dried thermal compound paste.
-        </p>
-      </div>
-
-      <div id="repairStepsTab" class="tab-content glass-card" style="padding: 1.5rem;">
-        <h3>Recommended Repair Procedure Summary</h3>
-        <ol style="margin-top: 0.75rem; padding-left: 1.25rem; color: var(--color-text-muted);" id="resultStepsList">
-          <li>Power down device and discharge all high-voltage capacitors.</li>
-          <li>Desolder damaged LM7805 IC with soldering iron set to 350°C and desoldering pump.</li>
-          <li>Clean PCB copper pads thoroughly using 99% Isopropyl Alcohol (IPA).</li>
-          <li>Apply fresh thermal grease to new LM7805 backplate.</li>
-          <li>Solder new component into place and verify 5.00V DC rail under load.</li>
-        </ol>
-      </div>
-
-      <div id="compatiblePartsTab" class="tab-content glass-card" style="padding: 1.5rem;">
-        <h3>Compatible Replacement Options</h3>
-        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-          <div class="glass-card" style="padding: 1rem; flex:1;">
-            <h4>LM7805-TO220 (OEM Direct)</h4>
-            <p style="color: var(--color-text-muted); font-size: 0.9rem;">Original Texas Instruments Part</p>
-            <div style="color: var(--color-accent); font-weight: 700; margin-top: 0.5rem;">$0.25 / ₹20</div>
-            <button class="btn btn-primary btn-sm" style="margin-top: 0.75rem;" onclick="navigateTo('marketplace')">Buy Now</button>
-          </div>
-        </div>
-      </div>
-
-      <div id="datasheetTab" class="tab-content glass-card" style="padding: 1.5rem;">
-        <h3>Technical Datasheet Document</h3>
-        <p style="color: var(--color-text-muted); margin-bottom: 1rem;">Official Texas Instruments LM7805 Specification PDF.</p>
-        <a id="resultDatasheetLink" href="https://www.ti.com/lit/ds/symlink/lm7805.pdf" target="_blank" class="btn btn-outline btn-sm">
-          <i class="fa-solid fa-file-pdf"></i> Open Official Datasheet PDF
-        </a>
-      </div>
+    <!-- Structured Issues / Specs List -->
+    <h3 style="margin-bottom:1rem;"><i class="fa-solid fa-microchip" style="color:var(--color-primary);"></i> Component Identification & Technical Specifications</h3>
+    <div id="resultIssuesList">
+      <!-- Injected by scan.js -->
     </div>
   </section>
 
-  <!-- 4. COMPONENT DETAILS VIEW -->
-  <section id="view-component-details" class="page-view">
-    <button class="btn btn-outline btn-sm" onclick="navigateTo('scan-result')" style="margin-bottom: 1rem;">
-      <i class="fa-solid fa-arrow-left"></i> Back to Scan Results
-    </button>
-    
-    <h2 class="section-title" id="compDetailTitle">Voltage Regulator IC (LM7805)</h2>
-    <p class="section-subtitle">Complete Datasheet & Engineering Pinout Specifications</p>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-      <div class="glass-card" style="padding: 1.75rem;">
-        <h3>Component Specifications</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem;">
-          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Category</td><td style="font-weight: 600;" id="compCategory">IC</td></tr>
-          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Package Type</td><td style="font-weight: 600;" id="compPackage">TO-220</td></tr>
-          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Input Voltage</td><td style="font-weight: 600;">7V - 25V DC</td></tr>
-          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Output Voltage</td><td style="font-weight: 600;">5.0V DC (±4%)</td></tr>
-          <tr style="border-bottom: 1px solid var(--color-border);"><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Max Output Current</td><td style="font-weight: 600;">1.5 Amperes</td></tr>
-          <tr><td style="padding: 0.6rem 0; color: var(--color-text-muted);">Max Operating Temp</td><td style="font-weight: 600;">150°C</td></tr>
-        </table>
-      </div>
-
-      <div class="glass-card" style="padding: 1.75rem;">
-        <h3>Pinout Configuration</h3>
-        <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.85rem;" id="pinoutList">
-          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between;">
-            <span style="font-weight: 700; color: var(--color-accent);">Pin 1: Input (VI)</span>
-            <span style="color: var(--color-text-muted);">Unregulated 7-25V DC</span>
-          </div>
-          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between;">
-            <span style="font-weight: 700; color: var(--color-accent);">Pin 2: Ground (GND)</span>
-            <span style="color: var(--color-text-muted);">Common Circuit Ground</span>
-          </div>
-          <div style="background: rgba(255,255,255,0.03); padding: 0.75rem 1rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between;">
-            <span style="font-weight: 700; color: var(--color-accent);">Pin 3: Output (VO)</span>
-            <span style="color: var(--color-text-muted);">Regulated 5.0V DC</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 5. AI ASSISTANT VIEW -->
+  <!-- ── 5. AI ASSISTANT VIEW ── -->
   <section id="view-assistant" class="page-view">
-    <h2 class="section-title">AI Electronics Assistant</h2>
-    <p class="section-subtitle">Ask technical hardware questions, verify component replacements, and receive step-by-step guidance.</p>
+    <h2 class="section-title">AI Property Damage Assistant</h2>
+    <p class="section-subtitle">Ask anything about wall crack repairs, water dampness treatment, structural safety, or contractor recommendations.</p>
 
-    <div class="chip-group">
-      <div class="chip" onclick="sendSuggestedQuery('Why is my TV not turning on?')">Why is my TV not turning on?</div>
-      <div class="chip" onclick="sendSuggestedQuery('What is an LM7805 IC?')">What is an LM7805 IC?</div>
-      <div class="chip" onclick="sendSuggestedQuery('Can I replace a 16V capacitor with a 25V one?')">Can I replace a 16V capacitor with a 25V one?</div>
-      <div class="chip" onclick="sendSuggestedQuery('How do I test an N-Channel MOSFET with a multimeter?')">How do I test a MOSFET?</div>
+    <div class="chip-group" id="assistantChips">
+      <button class="chip" onclick="sendSuggestedQuery('How to fix a widening exterior wall crack?')">🧱 Wall crack repair?</button>
+      <button class="chip" onclick="sendSuggestedQuery('How to prevent water seepage from damp walls?')">💧 Water dampness fix?</button>
+      <button class="chip" onclick="sendSuggestedQuery('What is the cost to repair broken roof tiles?')">🏠 Roof tile repair cost?</button>
+      <button class="chip" onclick="sendSuggestedQuery('When is a wall crack considered structurally dangerous?')">⚠️ Dangerous crack signs?</button>
     </div>
 
     <div class="chat-container glass-card">
-      <div class="chat-sidebar" style="border-right: 1px solid var(--color-border);">
-        <button class="btn btn-primary btn-sm" onclick="startNewChatSession()"><i class="fa-solid fa-plus"></i> New Chat</button>
+      <div class="chat-sidebar">
+        <button class="btn btn-primary btn-sm btn-full" onclick="startNewChatSession()"><i class="fa-solid fa-plus"></i> New Chat</button>
         <div class="chat-history-list" id="chatHistoryList">
-          <div class="chat-history-item active">LM7805 IC Diagnosis</div>
-          <div class="chat-history-item">TV Power Supply Troubleshooting</div>
-          <div class="chat-history-item">MOSFET Gate Testing</div>
+          <div class="chat-history-item active">🧱 Exterior Wall Crack Analysis</div>
+          <div class="chat-history-item">💧 Moisture Seepage Diagnosis</div>
+          <div class="chat-history-item">🏠 Roof Tile Leak Check</div>
         </div>
       </div>
-
       <div class="chat-main">
-        <div class="chat-messages" id="chatMessages">
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
           <div class="chat-bubble ai">
-            Hello! I'm Fixio Assistant. Ask me anything about electronic components, circuit testing, or repair procedures. You can also click the microphone to speak!
+            👋 Hello! I'm <strong>Fixio AI</strong> — your expert property damage and repair assistant.<br/><br/>
+            Ask me about wall crack sealants, dampness prevention, structural safety warnings, or estimated repair costs. I can also help you find nearby verified repair centers!
           </div>
         </div>
-
         <div class="chat-input-bar">
-          <input type="text" class="chat-input-field" id="chatInput" placeholder="Ask technical question or paste component part number..." onkeydown="handleChatKeyDown(event)">
-          <button class="voice-wave-btn" id="voiceMicBtn" onclick="toggleVoiceInput()" title="Voice Input (Speech-to-Text)">
+          <input type="text" class="chat-input-field" id="chatInput" placeholder="Ask a technical question or paste a part number…" onkeydown="handleChatKeyDown(event)" aria-label="Chat message input" />
+          <button class="voice-wave-btn" id="voiceMicBtn" onclick="toggleVoiceInput()" title="Voice input (Speech-to-Text)" aria-label="Voice input">
             <i class="fa-solid fa-microphone"></i>
           </button>
-          <button class="btn btn-accent" onclick="sendChatMessage()">
+          <button class="btn btn-primary" onclick="sendChatMessage()" aria-label="Send message">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </div>
@@ -355,281 +506,546 @@
     </div>
   </section>
 
-  <!-- 6. REPAIR GUIDE VIEW -->
+  <!-- ── 6. REPAIR GUIDE VIEW ── -->
   <section id="view-repair-guide" class="page-view">
-    <h2 class="section-title">Interactive Repair Guide</h2>
-    <p class="section-subtitle">How to Replace Damaged LM7805 Voltage Regulator IC</p>
+    <button class="btn btn-outline btn-sm" onclick="navigateTo('scan-result')" style="margin-bottom:1.25rem;">
+      <i class="fa-solid fa-arrow-left"></i> Back to Results
+    </button>
+    <h2 class="section-title">Interactive Property Repair Guide</h2>
+    <p class="section-subtitle" id="guideSubtitle">Exterior Wall Crack Sealing & Structural Repair — Step-by-Step</p>
 
-    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+    <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
       <span class="badge badge-warning"><i class="fa-solid fa-gauge-simple-high"></i> Intermediate</span>
-      <span class="badge badge-success"><i class="fa-solid fa-clock"></i> 30 - 60 mins</span>
+      <span class="badge badge-success"><i class="fa-solid fa-clock"></i> 2 - 4 hours</span>
+      <span class="badge badge-info"><i class="fa-solid fa-trowel"></i> Masonry & Sealant Tools</span>
     </div>
 
-    <!-- Required Tools Checklist -->
-    <div class="glass-card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
-      <h3><i class="fa-solid fa-toolbox"></i> Required Tools Checklist</h3>
-      <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
-        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
-          <input type="checkbox"> Soldering Iron (350°C)
+    <!-- Tools checklist -->
+    <div class="glass-card" style="padding:1.75rem; margin-bottom:1.5rem;">
+      <h3 style="margin-bottom:1.25rem;"><i class="fa-solid fa-toolbox" style="color:var(--color-primary);"></i> Required Tools & Materials Checklist</h3>
+      <div style="display:flex; flex-wrap:wrap; gap:0.85rem;" id="toolsChecklist">
+        <label class="neo-card-sm" style="padding:0.7rem 1.1rem; cursor:pointer; display:flex; align-items:center; gap:0.6rem; font-size:0.88rem;">
+          <input type="checkbox" style="accent-color:var(--color-primary); width:16px; height:16px;" /> Flexible Polymer Crack Sealant
         </label>
-        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
-          <input type="checkbox"> Desoldering Pump / Wick
+        <label class="neo-card-sm" style="padding:0.7rem 1.1rem; cursor:pointer; display:flex; align-items:center; gap:0.6rem; font-size:0.88rem;">
+          <input type="checkbox" style="accent-color:var(--color-primary); width:16px; height:16px;" /> Stainless Steel Putty Knife
         </label>
-        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
-          <input type="checkbox"> Digital Multimeter
+        <label class="neo-card-sm" style="padding:0.7rem 1.1rem; cursor:pointer; display:flex; align-items:center; gap:0.6rem; font-size:0.88rem;">
+          <input type="checkbox" style="accent-color:var(--color-primary); width:16px; height:16px;" /> Heavy-Duty Wire Cleaning Brush
         </label>
-        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
-          <input type="checkbox"> Thermal Grease Paste
+        <label class="neo-card-sm" style="padding:0.7rem 1.1rem; cursor:pointer; display:flex; align-items:center; gap:0.6rem; font-size:0.88rem;">
+          <input type="checkbox" style="accent-color:var(--color-primary); width:16px; height:16px;" /> Exterior Weatherproof Paint
         </label>
-        <label style="background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
-          <input type="checkbox"> 99% IPA & ESD Brush
+        <label class="neo-card-sm" style="padding:0.7rem 1.1rem; cursor:pointer; display:flex; align-items:center; gap:0.6rem; font-size:0.88rem;">
+          <input type="checkbox" style="accent-color:var(--color-primary); width:16px; height:16px;" /> Safety Goggles & Respirator Mask
         </label>
       </div>
     </div>
 
-    <!-- Step by Step Workflow -->
-    <div class="glass-card" style="padding: 1.75rem;">
-      <h3>Step-by-Step Instructions</h3>
-      <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1.25rem;">
-        <div style="border-left: 3px solid var(--color-accent); padding-left: 1rem;">
-          <h4 style="color: var(--color-accent);">Step 1: Discharge Power Supply Capacitors</h4>
-          <p style="color: var(--color-text-muted); margin-top: 0.35rem;">Unplug all power cables. Use a 1kΩ 5W resistor across the main capacitor terminals to discharge residual high voltage.</p>
+    <div class="glass-card" style="padding:1.75rem;">
+      <h3 style="margin-bottom:1.5rem;">Step-by-Step Procedure</h3>
+      <div style="display:flex; flex-direction:column; gap:1.5rem;" id="repairStepsGuide">
+        <div class="neo-card-sm" style="padding:1.25rem 1.5rem; border-left:4px solid var(--color-primary);">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+            <span style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#5B53F0,#7C74FF); color:#fff; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;">1</span>
+            <h4 style="color:var(--color-primary);">Discharge Power Supply Capacitors</h4>
+          </div>
+          <p style="color:var(--color-text-muted); font-size:0.9rem; padding-left:2.25rem;">Unplug all power cables. Use a 1kΩ 5W resistor across main capacitor terminals to discharge residual high voltage safely.</p>
         </div>
-
-        <div style="border-left: 3px solid var(--color-accent); padding-left: 1rem;">
-          <h4 style="color: var(--color-accent);">Step 2: Desolder Damaged IC</h4>
-          <p style="color: var(--color-text-muted); margin-top: 0.35rem;">Apply fresh flux to all 3 pins. Heat with soldering iron set to 350°C and suction away old solder with desoldering pump.</p>
+        <div class="neo-card-sm" style="padding:1.25rem 1.5rem; border-left:4px solid var(--color-accent);">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+            <span style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#7C74FF,#A78BFA); color:#fff; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;">2</span>
+            <h4 style="color:var(--color-accent);">Desolder Damaged IC</h4>
+          </div>
+          <p style="color:var(--color-text-muted); font-size:0.9rem; padding-left:2.25rem;">Apply fresh flux to all 3 pins. Heat with soldering iron at 350°C and suction away solder with desoldering pump.</p>
         </div>
-
-        <div style="border-left: 3px solid var(--color-accent); padding-left: 1rem;">
-          <h4 style="color: var(--color-accent);">Step 3: Clean Pads & Install Replacement</h4>
-          <p style="color: var(--color-text-muted); margin-top: 0.35rem;">Clean copper pads with IPA. Coat backplate with thermal paste and solder new LM7805 IC firmly.</p>
+        <div class="neo-card-sm" style="padding:1.25rem 1.5rem; border-left:4px solid var(--color-success);">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+            <span style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#10B981,#34D399); color:#fff; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;">3</span>
+            <h4 style="color:var(--color-success);">Clean Pads &amp; Install Replacement</h4>
+          </div>
+          <p style="color:var(--color-text-muted); font-size:0.9rem; padding-left:2.25rem;">Clean copper pads with 99% IPA. Apply thermal paste to new IC backplate and solder firmly to PCB.</p>
+        </div>
+        <div class="neo-card-sm" style="padding:1.25rem 1.5rem; border-left:4px solid var(--color-warning);">
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+            <span style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,#F59E0B,#FBBF24); color:#fff; font-weight:800; font-size:0.85rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;">4</span>
+            <h4 style="color:var(--color-warning);">Verify Voltage Rail</h4>
+          </div>
+          <p style="color:var(--color-text-muted); font-size:0.9rem; padding-left:2.25rem;">Power on device and measure output with multimeter. Confirm steady 5.0V DC at ±4% tolerance under full load.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- 7. MARKETPLACE VIEW -->
-  <section id="view-marketplace" class="page-view">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-      <div>
-        <h2 class="section-title">Replacement Parts Marketplace</h2>
-        <p class="section-subtitle">Find high-quality OEM and aftermarket electronic components.</p>
-      </div>
-      <button class="btn btn-accent btn-sm" onclick="toggleCartDrawer()">
-        <i class="fa-solid fa-cart-shopping"></i> View Cart (<span id="cartCount">0</span>)
-      </button>
-    </div>
-
-    <!-- Search & Filter Bar -->
-    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-      <input type="text" id="marketSearchInput" class="chat-input-field" placeholder="Search components by name or part number..." onkeyup="filterMarketplace()">
-      <select id="marketCategorySelect" class="chat-input-field" style="max-width: 200px;" onchange="filterMarketplace()">
-        <option value="All">All Categories</option>
-        <option value="IC">ICs</option>
-        <option value="Capacitor">Capacitors</option>
-        <option value="MOSFET">MOSFETs</option>
-        <option value="Diode">Diodes</option>
-      </select>
-    </div>
-
-    <div class="catalog-grid" id="marketProductGrid">
-      <!-- Injected dynamically via JS -->
-    </div>
-  </section>
-
-  <!-- 8. SERVICE CENTERS VIEW -->
+  <!-- ── 7. SERVICE CENTERS VIEW ── -->
   <section id="view-service-centers" class="page-view">
     <h2 class="section-title">Nearby Service Centers</h2>
-    <p class="section-subtitle">Find certified electronics repair shops and chip-level technicians near you.</p>
+    <p class="section-subtitle">Find certified masonry, waterproofing, roofing, plumbing, and electrical contractors near you.</p>
 
-    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-      <input type="text" id="storeSearchInput" class="chat-input-field" placeholder="Search by city or landmark (e.g., Chennai)..." onkeyup="filterStores()">
-      <button class="btn btn-primary" onclick="filterStores()"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+    <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+      <div class="search-input-wrap" style="flex:1; min-width:200px;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="storeSearchInput" class="search-input" placeholder="Search by city, area, or provider name…" onkeyup="filterStores()" aria-label="Search service centers" />
+      </div>
+      <select id="storeCategorySelect" class="neo-select" style="max-width:200px;" onchange="filterStores()" aria-label="Filter by category">
+        <option value="All">All Categories</option>
+        <option value="Masonry">Masonry & Structural</option>
+        <option value="Plumbing">Plumbing & Water</option>
+        <option value="Roofing">Roofing & Tiles</option>
+        <option value="Electrical">Electrical Hazard</option>
+      </select>
+      <select id="storeSortSelect" class="neo-select" style="max-width:160px;" onchange="filterStores()" aria-label="Sort service centers">
+        <option value="distance">Nearest First</option>
+        <option value="rating">Top Rated</option>
+      </select>
+      <button class="btn btn-secondary" onclick="locateNearMe()"><i class="fa-solid fa-location-crosshairs"></i> Near Me</button>
     </div>
 
     <div class="map-layout">
-      <div class="store-list" id="storeListContainer">
-        <!-- Injected dynamically -->
+      <div class="store-list" id="storeListContainer" role="list" aria-label="Service centers list">
+        <!-- Injected by JS -->
       </div>
-      <div class="glass-card" style="padding: 0; position: relative;">
-        <canvas id="mapCanvas" class="map-view-canvas"></canvas>
+      <div class="glass-card" style="padding:0; overflow:hidden; min-height:480px;">
+        <!-- Leaflet OpenSource Interactive Street Map -->
+        <div id="leafletMap" style="height: 100%; min-height: 480px; width: 100%; border-radius: var(--radius-lg);"></div>
       </div>
     </div>
   </section>
 
-  <!-- 9. USER DASHBOARD VIEW -->
+
+  <!-- ── 8. DASHBOARD VIEW ── -->
   <section id="view-dashboard" class="page-view">
-    <h2 class="section-title">Technician Dashboard</h2>
-    <p class="section-subtitle">Manage your scan history, saved reports, and user profile settings.</p>
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:2rem;">
+      <div>
+        <h2 class="section-title">Technician Dashboard</h2>
+        <p class="section-subtitle">Overview of your scans, orders, and saved reports.</p>
+      </div>
+      <div style="display:flex; gap:0.75rem; align-items:center;">
+        <div id="dashUserGreeting" style="font-weight:600; color:var(--color-primary);"></div>
+        <button class="btn btn-danger btn-sm" onclick="handleLogout()"><i class="fa-solid fa-sign-out-alt"></i> Logout</button>
+      </div>
+    </div>
 
     <div class="metrics-grid">
       <div class="metric-card glass-card">
-        <div style="color: var(--color-text-muted);">Total Scans</div>
+        <div style="font-size:1.8rem; color:var(--color-primary); margin-bottom:0.5rem;"><i class="fa-solid fa-camera"></i></div>
+        <div style="color:var(--color-text-muted); font-size:0.85rem;">Total Scans</div>
         <div class="metric-value" id="dashTotalScans">24</div>
       </div>
       <div class="metric-card glass-card">
-        <div style="color: var(--color-text-muted);">Issues Found</div>
-        <div class="metric-value" style="color: var(--color-danger);" id="dashIssuesFound">18</div>
+        <div style="font-size:1.8rem; color:var(--color-danger); margin-bottom:0.5rem;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div style="color:var(--color-text-muted); font-size:0.85rem;">Issues Found</div>
+        <div class="metric-value" id="dashIssuesFound" style="color:var(--color-danger);">18</div>
       </div>
       <div class="metric-card glass-card">
-        <div style="color: var(--color-text-muted);">Repaired</div>
-        <div class="metric-value" style="color: var(--color-success);" id="dashRepaired">12</div>
+        <div style="font-size:1.8rem; color:var(--color-success); margin-bottom:0.5rem;"><i class="fa-solid fa-circle-check"></i></div>
+        <div style="color:var(--color-text-muted); font-size:0.85rem;">Repaired</div>
+        <div class="metric-value" id="dashRepaired" style="color:var(--color-success);">12</div>
       </div>
       <div class="metric-card glass-card">
-        <div style="color: var(--color-text-muted);">In Progress</div>
-        <div class="metric-value" style="color: var(--color-warning);" id="dashInProgress">4</div>
+        <div style="font-size:1.8rem; color:var(--color-warning); margin-bottom:0.5rem;"><i class="fa-solid fa-spinner"></i></div>
+        <div style="color:var(--color-text-muted); font-size:0.85rem;">In Progress</div>
+        <div class="metric-value" id="dashInProgress" style="color:var(--color-warning);">4</div>
+      </div>
+      <div class="metric-card glass-card">
+        <div style="font-size:1.8rem; color:var(--color-accent); margin-bottom:0.5rem;"><i class="fa-solid fa-cart-shopping"></i></div>
+        <div style="color:var(--color-text-muted); font-size:0.85rem;">Orders Placed</div>
+        <div class="metric-value" id="dashOrders" style="color:var(--color-accent);">7</div>
       </div>
     </div>
 
-    <div class="glass-card" style="padding: 1.75rem;">
-      <h3>Recent Scan Reports</h3>
-      <table style="width:100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.95rem;">
-        <thead>
-          <tr style="border-bottom: 1px solid var(--color-border); text-align: left; color: var(--color-text-muted);">
-            <th style="padding: 0.75rem;">Device Name</th>
-            <th style="padding: 0.75rem;">Component</th>
-            <th style="padding: 0.75rem;">Status</th>
-            <th style="padding: 0.75rem;">Confidence</th>
-            <th style="padding: 0.75rem;">Action</th>
-          </tr>
-        </thead>
-        <tbody id="dashScanTable">
-          <!-- Injected dynamically -->
-        </tbody>
-      </table>
+    <div class="glass-card" style="padding:1.75rem; margin-top:0.5rem;">
+      <h3 style="margin-bottom:1.25rem;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--color-primary);"></i> Recent Scan Reports</h3>
+      <div style="overflow-x:auto;">
+        <table class="neo-table">
+          <thead>
+            <tr>
+              <th>Device</th>
+              <th>Component</th>
+              <th>Status</th>
+              <th>Confidence</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="dashScanTable">
+            <!-- Injected by JS -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 
-  <!-- 10. ABOUT VIEW -->
+  <!-- ── 9. ABOUT VIEW ── -->
   <section id="view-about" class="page-view">
-    <div style="max-width: 800px; margin: 0 auto;">
-      <h2 class="section-title">About Fixio</h2>
-      <p class="section-subtitle">Empowering technicians and hobbyists with state-of-the-art Computer Vision & Generative AI for electronic circuit repair.</p>
-      
-      <div class="glass-card" style="padding: 2rem; margin-top: 1.5rem; line-height: 1.8;">
-        <p>Fixio utilizes deep neural networks (YOLO object detection) and specialized LLMs to scan printed circuit boards, identify microscopic component damage, provide exact replacement specs, and suggest step-by-step soldering guidelines.</p>
+    <div style="max-width:820px; margin:0 auto;">
+      <h2 class="section-title text-center">About NeoShop</h2>
+      <p class="section-subtitle text-center" style="max-width:100%;">Empowering technicians and hobbyists with premium parts, AI-powered diagnostics, and seamless repair workflows.</p>
+
+      <div class="glass-card" style="padding:2.5rem; margin-top:2rem; line-height:1.9;">
+        <p>NeoShop combines a curated electronics marketplace with state-of-the-art Computer Vision and Generative AI to help engineers and repair technicians work smarter. Scan PCBs, identify damaged components, source verified replacements, and access step-by-step repair guides — all in one platform.</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:2rem;">
+          <div class="neo-inset" style="padding:1.25rem;">
+            <h4 style="margin-bottom:0.5rem;">🤖 AI-Powered</h4>
+            <p style="font-size:0.88rem; color:var(--color-text-muted);">YOLOv8 object detection + specialized LLMs for chip-level analysis and repair recommendations.</p>
+          </div>
+          <div class="neo-inset" style="padding:1.25rem;">
+            <h4 style="margin-bottom:0.5rem;">🌍 Global Catalog</h4>
+            <p style="font-size:0.88rem; color:var(--color-text-muted);">12,000+ genuine OEM and aftermarket parts from verified suppliers worldwide.</p>
+          </div>
+          <div class="neo-inset" style="padding:1.25rem;">
+            <h4 style="margin-bottom:0.5rem;">🔒 Secure & Fast</h4>
+            <p style="font-size:0.88rem; color:var(--color-text-muted);">SSL-encrypted checkout, Razorpay / Stripe integration, and 48h fast dispatch.</p>
+          </div>
+          <div class="neo-inset" style="padding:1.25rem;">
+            <h4 style="margin-bottom:0.5rem;">🛠️ Expert Support</h4>
+            <p style="font-size:0.88rem; color:var(--color-text-muted);">24/7 certified electronics engineers available via chat or phone for technical guidance.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- MODALS -->
+  <!-- ======================================================
+       MODALS
+  ====================================================== -->
 
-  <!-- Auth Login Modal -->
-  <div class="modal-backdrop" id="loginModal">
+  <!-- Login Modal -->
+  <div class="modal-backdrop" id="loginModal" role="dialog" aria-modal="true" aria-label="Login" onclick="if(event.target===this) closeModal('loginModal')">
     <div class="modal-box">
-      <button class="modal-close" onclick="closeModal('loginModal')">&times;</button>
-      <h2>Welcome Back to Fixio</h2>
-      <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">Sign in to save your scan history</p>
-
+      <button class="modal-close" onclick="closeModal('loginModal')" aria-label="Close login modal">&times;</button>
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div class="brand-icon" style="margin:0 auto 1rem; width:50px; height:50px; font-size:1.3rem;"><i class="fa-solid fa-bolt-lightning"></i></div>
+        <h2>Welcome Back</h2>
+        <p style="color:var(--color-text-muted); font-size:0.9rem; margin-top:0.35rem;">Sign in to NeoShop</p>
+      </div>
       <form onsubmit="handleLoginSubmit(event)">
-        <div style="margin-bottom: 1rem;">
-          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Email Address</label>
-          <input type="email" id="loginEmail" required class="chat-input-field" style="width:100%; margin-top:0.35rem;" value="karthik@example.com">
+        <div class="neo-form-group">
+          <label class="neo-form-label" for="loginEmail">Email Address</label>
+          <input type="email" id="loginEmail" class="neo-form-input" placeholder="you@example.com" value="karthik@example.com" required />
         </div>
-        <div style="margin-bottom: 1.5rem;">
-          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Password</label>
-          <input type="password" id="loginPass" required class="chat-input-field" style="width:100%; margin-top:0.35rem;" value="password123">
+        <div class="neo-form-group">
+          <label class="neo-form-label" for="loginPass">Password</label>
+          <input type="password" id="loginPass" class="neo-form-input" placeholder="••••••••" value="password123" required />
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem;">Sign In</button>
+        <button type="button" class="btn btn-secondary btn-full" style="margin-top:0.5rem;" onclick="guestLogin()">Continue as Guest</button>
+        
+        <div style="margin: 1.2rem 0; text-align: center; position: relative;">
+          <hr style="border: none; border-top: 1px solid var(--neo-border); margin: 0;" />
+          <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--neo-bg); padding: 0 0.5rem; font-size: 0.8rem; color: var(--color-text-muted);">OR</span>
         </div>
 
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
-        <button type="button" class="btn btn-outline" style="width: 100%; margin-top:0.75rem;" onclick="guestLogin()">Continue as Guest</button>
+        <div id="googleBtnLogin" style="display: flex; justify-content: center; margin-bottom: 0.75rem;">
+          <button type="button" class="btn btn-secondary btn-full" style="display:flex; align-items:center; justify-content:center; gap:0.5rem; border-color: rgba(255,255,255,0.15);" onclick="triggerGoogleSignIn()">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 16c1.8 3.7 5.6 7 10.1 7z"/></svg>
+            Sign in with Google
+          </button>
+        </div>
+
+        <p style="text-align:center; font-size:0.82rem; color:var(--color-text-muted); margin-top:1rem;">
+          Don't have an account? <a onclick="closeModal('loginModal'); openModal('registerModal');" style="cursor:pointer; font-weight:600;">Register</a>
+        </p>
       </form>
     </div>
   </div>
 
   <!-- Register Modal -->
-  <div class="modal-backdrop" id="registerModal">
+  <div class="modal-backdrop" id="registerModal" role="dialog" aria-modal="true" aria-label="Register" onclick="if(event.target===this) closeModal('registerModal')">
     <div class="modal-box">
-      <button class="modal-close" onclick="closeModal('registerModal')">&times;</button>
-      <h2>Create Fixio Account</h2>
-      <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">Join thousands of electronics technicians</p>
-
+      <button class="modal-close" onclick="closeModal('registerModal')" aria-label="Close register modal">&times;</button>
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <div class="brand-icon" style="margin:0 auto 1rem; width:50px; height:50px; font-size:1.3rem;"><i class="fa-solid fa-bolt-lightning"></i></div>
+        <h2>Create Account</h2>
+        <p style="color:var(--color-text-muted); font-size:0.9rem; margin-top:0.35rem;">Join Fixio Community</p>
+      </div>
       <form onsubmit="handleRegisterSubmit(event)">
-        <div style="margin-bottom: 1rem;">
-          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Full Name</label>
-          <input type="text" id="regName" required class="chat-input-field" style="width:100%; margin-top:0.35rem;">
+        <div class="neo-form-group">
+          <label class="neo-form-label" for="regName">Full Name</label>
+          <input type="text" id="regName" class="neo-form-input" placeholder="Karthik Rajan" required />
         </div>
-        <div style="margin-bottom: 1rem;">
-          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Email Address</label>
-          <input type="email" id="regEmail" required class="chat-input-field" style="width:100%; margin-top:0.35rem;">
+        <div class="neo-form-row">
+          <div class="neo-form-group">
+            <label class="neo-form-label" for="regEmail">Email</label>
+            <input type="email" id="regEmail" class="neo-form-input" placeholder="you@example.com" required />
+          </div>
+          <div class="neo-form-group">
+            <label class="neo-form-label" for="regPhone">Phone</label>
+            <input type="tel" id="regPhone" class="neo-form-input" placeholder="+91 9876543210" />
+          </div>
         </div>
-        <div style="margin-bottom: 1.5rem;">
-          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Password</label>
-          <input type="password" id="regPass" required class="chat-input-field" style="width:100%; margin-top:0.35rem;">
+        <div class="neo-form-group">
+          <label class="neo-form-label" for="regPass">Password</label>
+          <input type="password" id="regPass" class="neo-form-input" placeholder="Min. 8 characters" required minlength="8" />
+        </div>
+        <button type="submit" class="btn btn-accent btn-full" style="margin-top:0.5rem;">Create Account</button>
+        
+        <div style="margin: 1.2rem 0; text-align: center; position: relative;">
+          <hr style="border: none; border-top: 1px solid var(--neo-border); margin: 0;" />
+          <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--neo-bg); padding: 0 0.5rem; font-size: 0.8rem; color: var(--color-text-muted);">OR</span>
         </div>
 
-        <button type="submit" class="btn btn-accent" style="width: 100%;">Create Account</button>
+        <div id="googleBtnRegister" style="display: flex; justify-content: center; margin-bottom: 0.75rem;">
+          <button type="button" class="btn btn-secondary btn-full" style="display:flex; align-items:center; justify-content:center; gap:0.5rem; border-color: rgba(255,255,255,0.15);" onclick="triggerGoogleSignIn()">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.3-6.4-5.2L1.9 16c1.8 3.7 5.6 7 10.1 7z"/></svg>
+            Sign up with Google
+          </button>
+        </div>
+
+        <p style="text-align:center; font-size:0.82rem; color:var(--color-text-muted); margin-top:1rem;">
+          Already have an account? <a onclick="closeModal('registerModal'); openModal('loginModal');" style="cursor:pointer; font-weight:600;">Login</a>
+        </p>
       </form>
     </div>
   </div>
 
-  <!-- Appointment Booking Modal -->
-  <div class="modal-backdrop" id="appointmentModal">
+  <!-- Appointment Modal -->
+  <div class="modal-backdrop" id="appointmentModal" role="dialog" aria-modal="true" onclick="if(event.target===this) closeModal('appointmentModal')">
     <div class="modal-box">
-      <button class="modal-close" onclick="closeModal('appointmentModal')">&times;</button>
+      <button class="modal-close" onclick="closeModal('appointmentModal')" aria-label="Close">&times;</button>
       <h2 id="appointStoreName">Book Service Appointment</h2>
-      <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">Schedule a chip-level diagnostic with certified technician</p>
-
+      <p style="color:var(--color-text-muted); margin-bottom:1.5rem;">Schedule a chip-level diagnostic with a certified technician.</p>
       <form onsubmit="handleBookAppointment(event)">
-        <input type="hidden" id="appointStoreId">
-        <div style="margin-bottom: 1rem;">
-          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Device Model</label>
-          <input type="text" id="appointDevice" required class="chat-input-field" style="width:100%; margin-top:0.35rem;" value="Smart TV Power Board">
+        <input type="hidden" id="appointStoreId" />
+        <div class="neo-form-group">
+          <label class="neo-form-label">Device Model</label>
+          <input type="text" id="appointDevice" class="neo-form-input" value="Smart TV Power Board" required />
         </div>
-        <div style="margin-bottom: 1rem;">
-          <label style="font-size: 0.85rem; color: var(--color-text-muted);">Preferred Date</label>
-          <input type="date" id="appointDate" required class="chat-input-field" style="width:100%; margin-top:0.35rem;" value="2026-08-01">
+        <div class="neo-form-group">
+          <label class="neo-form-label">Preferred Date</label>
+          <input type="date" id="appointDate" class="neo-form-input" required />
         </div>
-        <button type="submit" class="btn btn-accent" style="width:100%;">Confirm Appointment</button>
+        <div class="neo-form-group">
+          <label class="neo-form-label">Time Slot</label>
+          <select class="neo-form-input" style="padding-left:1rem;" id="appointTime">
+            <option>09:00 AM – 11:00 AM</option>
+            <option>11:00 AM – 01:00 PM</option>
+            <option>02:00 PM – 04:00 PM</option>
+            <option>04:00 PM – 06:00 PM</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-accent btn-full">Confirm Appointment</button>
       </form>
     </div>
   </div>
 
-  <!-- FOOTER -->
-  <footer>
+  <!-- Checkout Modal -->
+  <div class="modal-backdrop" id="checkoutModal" role="dialog" aria-modal="true" onclick="if(event.target===this) closeModal('checkoutModal')">
+    <div class="modal-box" style="max-width:520px;">
+      <button class="modal-close" onclick="closeModal('checkoutModal')" aria-label="Close">&times;</button>
+      <h2 style="margin-bottom:0.35rem;"><i class="fa-solid fa-lock" style="color:var(--color-primary);"></i> Secure Checkout</h2>
+      <p style="color:var(--color-text-muted); margin-bottom:1.5rem; font-size:0.88rem;">SSL-encrypted • Razorpay / Stripe secured</p>
+      <form onsubmit="handleCheckoutSubmit(event)" id="checkoutForm">
+        <h4 style="margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--color-text-muted);">Shipping Information</h4>
+        <div class="neo-form-row">
+          <div class="neo-form-group">
+            <label class="neo-form-label">First Name</label>
+            <input type="text" class="neo-form-input" id="checkFirstName" placeholder="Karthik" required />
+          </div>
+          <div class="neo-form-group">
+            <label class="neo-form-label">Last Name</label>
+            <input type="text" class="neo-form-input" id="checkLastName" placeholder="Rajan" required />
+          </div>
+        </div>
+        <div class="neo-form-group">
+          <label class="neo-form-label">Email</label>
+          <input type="email" class="neo-form-input" id="checkEmail" placeholder="you@example.com" required />
+        </div>
+        <div class="neo-form-group">
+          <label class="neo-form-label">Delivery Address</label>
+          <input type="text" class="neo-form-input" id="checkAddress" placeholder="123 Tech Street, Chennai, TN" required />
+        </div>
+        <div class="neo-form-row">
+          <div class="neo-form-group">
+            <label class="neo-form-label">City</label>
+            <input type="text" class="neo-form-input" id="checkCity" placeholder="Chennai" required />
+          </div>
+          <div class="neo-form-group">
+            <label class="neo-form-label">Pincode</label>
+            <input type="text" class="neo-form-input" id="checkPin" placeholder="600001" required pattern="[0-9]{6}" />
+          </div>
+        </div>
+        <hr class="divider" />
+        <h4 style="margin-bottom:1rem; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--color-text-muted);">Payment</h4>
+        <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+          <label class="neo-card-sm" style="padding:0.65rem 1rem; cursor:pointer; display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; font-weight:600;">
+            <input type="radio" name="payment" value="upi" checked style="accent-color:var(--color-primary);" /> UPI / GPay
+          </label>
+          <label class="neo-card-sm" style="padding:0.65rem 1rem; cursor:pointer; display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; font-weight:600;">
+            <input type="radio" name="payment" value="card" style="accent-color:var(--color-primary);" /> Credit/Debit Card
+          </label>
+          <label class="neo-card-sm" style="padding:0.65rem 1rem; cursor:pointer; display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; font-weight:600;">
+            <input type="radio" name="payment" value="cod" style="accent-color:var(--color-primary);" /> Cash on Delivery
+          </label>
+        </div>
+        <div style="background:var(--neo-bg-deep); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem; box-shadow:var(--neo-shadow-inset-sm);">
+          <div style="display:flex; justify-content:space-between; font-size:0.88rem; color:var(--color-text-muted); margin-bottom:0.4rem;">
+            <span>Subtotal</span><span id="checkSubtotal">$0.00</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.88rem; color:var(--color-text-muted); margin-bottom:0.4rem;">
+            <span>Delivery</span><span style="color:var(--color-success);">FREE</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:1rem; font-weight:800; color:var(--color-primary); margin-top:0.5rem; padding-top:0.5rem; border-top:1.5px solid var(--neo-shadow-dark);">
+            <span>Total</span><span id="checkTotal">$0.00</span>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg"><i class="fa-solid fa-lock"></i> Place Order</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Product Quick-View Modal -->
+  <div class="modal-backdrop" id="productModal" role="dialog" aria-modal="true" onclick="if(event.target===this) closeModal('productModal')">
+    <div class="modal-box" style="max-width:700px;">
+      <button class="modal-close" onclick="closeModal('productModal')" aria-label="Close">&times;</button>
+      <div class="product-detail-grid" id="productModalContent" style="gap:1.5rem;">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       FOOTER
+  ====================================================== -->
+  <footer role="contentinfo">
     <div class="footer-content">
       <div>
-        <div class="nav-brand" style="margin-bottom: 1rem;">
-          <div class="brand-icon"><i class="fa-solid fa-microchip"></i></div>
-          <div>Fix<span>io</span></div>
+        <div class="nav-brand" style="margin-bottom:1rem; cursor:default;">
+          <div class="brand-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+          <span>Neo<span style="color:var(--color-accent)">Shop</span></span>
         </div>
-        <p>AI-powered electronics component scanning, damage detection, repair guidance, and replacement parts marketplace.</p>
+        <p style="font-size:0.88rem; line-height:1.75; max-width:280px;">Premium electronics marketplace with AI-powered diagnostics, repair guides, and a curated catalog of 12,000+ genuine components.</p>
+        <div class="footer-socials">
+          <a href="#" class="footer-social-btn" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" class="footer-social-btn" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+          <a href="#" class="footer-social-btn" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+          <a href="#" class="footer-social-btn" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+        </div>
       </div>
-
       <div>
-        <h4 style="color:#FFF; margin-bottom: 1rem;">Quick Links</h4>
-        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('home')">Home</a></p>
-        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('scanner')">AI Scanner</a></p>
-        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('assistant')">AI Assistant</a></p>
+        <h4>Explore</h4>
+        <a onclick="navigateTo('home')">Home</a>
+        <a onclick="navigateTo('shop')">Product Catalog</a>
+        <a onclick="navigateTo('scanner')">AI Scanner</a>
+        <a onclick="navigateTo('assistant')">AI Assistant</a>
       </div>
-
       <div>
-        <h4 style="color:#FFF; margin-bottom: 1rem;">Resources</h4>
-        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('repair-guide')">Repair Guides</a></p>
-        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('marketplace')">Marketplace</a></p>
-        <p style="margin-bottom:0.5rem;"><a onclick="navigateTo('service-centers')">Service Centers</a></p>
+        <h4>Resources</h4>
+        <a onclick="navigateTo('repair-guide')">Repair Guides</a>
+        <a onclick="navigateTo('service-centers')">Service Centers</a>
+        <a onclick="navigateTo('dashboard')">Dashboard</a>
+        <a onclick="navigateTo('about')">About Us</a>
       </div>
-
       <div>
-        <h4 style="color:#FFF; margin-bottom: 1rem;">Connect</h4>
-        <p style="margin-bottom:0.5rem;"><i class="fa-solid fa-envelope"></i> support@fixio.tech</p>
-        <p style="margin-bottom:0.5rem;"><i class="fa-solid fa-phone"></i> +1 (800) 555-FIXIO</p>
+        <h4>Contact</h4>
+        <p><i class="fa-solid fa-envelope"></i> support@neoshop.tech</p>
+        <p><i class="fa-solid fa-phone"></i> +91 80 4567 8900</p>
+        <p><i class="fa-solid fa-clock"></i> Mon–Sat: 9 AM – 8 PM</p>
+        <p style="margin-top:0.75rem;"><i class="fa-solid fa-shield-halved" style="color:var(--color-success);"></i> <span style="font-size:0.82rem;">GST: 33AABCN1234M1ZD</span></p>
       </div>
     </div>
-
     <div class="footer-bottom">
-      &copy; 2026 Fixio Technologies Inc. All rights reserved. Designed for Precision Hardware Engineering.
+      &copy; 2026 NeoShop Technologies Pvt. Ltd. · All rights reserved ·
+      <a href="#" style="color:var(--color-primary);">Privacy Policy</a> ·
+      <a href="#" style="color:var(--color-primary);">Terms of Service</a>
     </div>
   </footer>
 
-  <!-- Frontend Logic Scripts -->
+  <!-- ADD PRODUCT MODAL -->
+  <div class="modal-backdrop" id="addProductModal" role="dialog" aria-modal="true" aria-labelledby="addProductModalTitle">
+    <div class="modal-card" style="max-width:560px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+        <h3 id="addProductModalTitle" style="font-size:1.3rem; font-weight:700; color:var(--color-text-main); display:flex; align-items:center; gap:0.5rem;">
+          <i class="fa-solid fa-square-plus" style="color:var(--color-primary);"></i> Add New Product
+        </h3>
+        <button class="modal-close" onclick="closeModal('addProductModal')" aria-label="Close modal">&times;</button>
+      </div>
+      <form onsubmit="handleAddProductSubmit(event)">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+          <div class="neo-input-group" style="grid-column:1 / -1;">
+            <label for="newProdName">Product Name *</label>
+            <input type="text" id="newProdName" class="neo-input" placeholder="e.g. STM32F407VGT6 ARM Cortex-M4 MCU" required />
+          </div>
+          <div class="neo-input-group">
+            <label for="newProdPartNumber">Part Number *</label>
+            <input type="text" id="newProdPartNumber" class="neo-input" placeholder="e.g. STM32F407VGT6" required />
+          </div>
+          <div class="neo-input-group">
+            <label for="newProdCategory">Category *</label>
+            <select id="newProdCategory" class="neo-select" required>
+              <option value="IC">IC / Microcontroller</option>
+              <option value="Capacitor">Capacitor</option>
+              <option value="Resistor">Resistor</option>
+              <option value="MOSFET">MOSFET / Transistor</option>
+              <option value="Diode">Diode</option>
+              <option value="Tool">Repair Tool</option>
+            </select>
+          </div>
+          <div class="neo-input-group">
+            <label for="newProdPrice">Price ($) *</label>
+            <input type="number" step="0.01" min="0.01" id="newProdPrice" class="neo-input" placeholder="e.g. 4.50" required />
+          </div>
+          <div class="neo-input-group">
+            <label for="newProdStock">Stock Quantity *</label>
+            <input type="number" min="1" id="newProdStock" class="neo-input" value="100" required />
+          </div>
+          <div class="neo-input-group" style="grid-column:1 / -1;">
+            <label for="newProdCompat">Compatibility & Description</label>
+            <textarea id="newProdCompat" class="neo-textarea" rows="2" placeholder="e.g. High-performance 32-bit MCU for embedded systems."></textarea>
+          </div>
+          <div class="neo-input-group" style="grid-column:1 / -1;">
+            <label for="newProdImage">Image URL (Optional)</label>
+            <input type="url" id="newProdImage" class="neo-input" placeholder="https://example.com/image.jpg" />
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addProductModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Add Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- REVIEW MODAL -->
+  <div class="modal-backdrop" id="reviewModal" role="dialog" aria-modal="true" onclick="if(event.target===this) closeModal('reviewModal')">
+    <div class="modal-box" style="max-width:500px;">
+      <button class="modal-close" onclick="closeModal('reviewModal')" aria-label="Close">&times;</button>
+      <h3 id="reviewStoreName" style="margin-bottom:0.4rem;">Submit Provider Review</h3>
+      <p style="color:var(--color-text-muted); font-size:0.85rem; margin-bottom:1.25rem;">Rate your experience with this service center.</p>
+      <form onsubmit="handleReviewSubmit(event)">
+        <input type="hidden" id="reviewStoreId" />
+        <div class="neo-form-group">
+          <label class="neo-form-label">Rating (1 to 5 Stars)</label>
+          <select id="reviewRating" class="neo-form-input" style="padding-left:1rem;" required>
+            <option value="5">⭐⭐⭐⭐⭐ 5 - Excellent</option>
+            <option value="4">⭐⭐⭐⭐ 4 - Good</option>
+            <option value="3">⭐⭐⭐ 3 - Average</option>
+            <option value="2">⭐⭐ 2 - Below Average</option>
+            <option value="1">⭐ 1 - Poor</option>
+          </select>
+        </div>
+        <div class="neo-form-group">
+          <label class="neo-form-label">Review Comment</label>
+          <textarea id="reviewComment" class="neo-textarea" rows="3" placeholder="Describe the quality of service, timeliness, and repair results..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.75rem;"><i class="fa-solid fa-paper-plane"></i> Submit Verified Review</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================
+       SCRIPTS
+  ====================================================== -->
+  <!-- Leaflet OpenSource Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script src="/js/app.js"></script>
+  <script src="/js/marketplace.js"></script>
   <script src="/js/scan.js"></script>
   <script src="/js/chat.js"></script>
   <script src="/js/map.js"></script>
-  <script src="/js/marketplace.js"></script>
   <script src="/js/dashboard.js"></script>
 
 </body>
 </html>
+

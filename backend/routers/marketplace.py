@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from backend.database import get_db
-from backend.models import Product
-from backend.schemas import ProductOut
+from backend.models import Product, User
+from backend.schemas import ProductOut, ProductCreate
+from backend.auth_utils import get_current_user
 
 router = APIRouter(prefix="/api/marketplace", tags=["Marketplace"])
 
@@ -23,6 +24,30 @@ def list_products(
             (Product.compatibility_info.ilike(f"%{q}%"))
         )
     return query.all()
+
+@router.post("", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
+def create_product(
+    prod: ProductCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    price_fmt = prod.price_formatted or f"${prod.price:.2f}"
+    new_product = Product(
+        name=prod.name,
+        part_number=prod.part_number,
+        category=prod.category,
+        price=prod.price,
+        price_formatted=price_fmt,
+        stock_status=prod.stock_status or "In Stock",
+        stock_quantity=prod.stock_quantity or 100,
+        compatibility_info=prod.compatibility_info or "",
+        rating=prod.rating or 5.0,
+        image_url=prod.image_url or ""
+    )
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
+    return new_product
 
 @router.get("/{product_id}", response_model=ProductOut)
 def get_product(product_id: int, db: Session = Depends(get_db)):

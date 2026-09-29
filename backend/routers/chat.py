@@ -4,14 +4,18 @@ from datetime import datetime
 from backend.database import get_db
 from backend.models import ChatHistory, User
 from backend.schemas import ChatMessage, ChatResponse
-from backend.ai_engine import AIElectronicsEngine
+from backend.ai_engine import FixioAIEngine
+from backend.auth_utils import get_current_user
 
 router = APIRouter(prefix="/api/chat", tags=["AI Assistant"])
 
 @router.post("", response_model=ChatResponse)
-def ask_assistant(payload: ChatMessage, db: Session = Depends(get_db)):
-    user = db.query(User).first()
-    user_id = user.id if user else None
+def ask_assistant(
+    payload: ChatMessage,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    user_id = current_user.id
 
     # Save User message
     user_msg = ChatHistory(
@@ -24,7 +28,7 @@ def ask_assistant(payload: ChatMessage, db: Session = Depends(get_db)):
     db.commit()
 
     # Generate AI response
-    ai_result = AIElectronicsEngine.answer_assistant_query(payload.message)
+    ai_result = FixioAIEngine.answer_assistant_query(payload.message)
 
     # Save AI message
     ai_msg = ChatHistory(
@@ -44,6 +48,13 @@ def ask_assistant(payload: ChatMessage, db: Session = Depends(get_db)):
     )
 
 @router.get("/history/{session_id}")
-def get_chat_history(session_id: str, db: Session = Depends(get_db)):
-    history = db.query(ChatHistory).filter(ChatHistory.session_id == session_id).order_by(ChatHistory.timestamp.asc()).all()
+def get_chat_history(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    history = db.query(ChatHistory).filter(
+        ChatHistory.session_id == session_id,
+        ChatHistory.user_id == current_user.id
+    ).order_by(ChatHistory.timestamp.asc()).all()
     return history
